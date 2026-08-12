@@ -24,9 +24,12 @@ button{font:inherit;border:0;border-radius:16px;padding:16px 10px;font-weight:80
 .panel{position:fixed;z-index:2000;inset:0;background:#f4f4f4;display:none;overflow:auto;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom))}
 .panel h2{margin-top:0}.card{background:white;border-radius:16px;padding:14px;margin:10px 0}.card button{width:100%;text-align:left;background:white;padding:0}.close{position:sticky;top:0;float:right;background:#222;color:#fff;padding:9px 13px}
 .small{font-size:13px;color:#666;margin-top:5px}
+.round-row{display:flex;align-items:center;gap:10px}
+.round-open{flex:1}
+.delete-round{width:auto!important;flex:0 0 auto!important;padding:10px 12px!important;border-radius:12px!important;color:#007AFF!important;font-weight:800!important;background:#f2f2f7!important;text-align:center!important}
 .distance-label{background:#fff;border:0;border-radius:9px;padding:3px 6px;font-weight:800;box-shadow:0 1px 5px #555}
-.current-crosshair{width:28px;height:28px;border:3px solid #fff;border-radius:50%;box-sizing:border-box;position:relative;box-shadow:0 0 0 2px rgba(0,0,0,.45)}
-.current-crosshair:before,.current-crosshair:after{content:"";position:absolute;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.current-crosshair{width:28px;height:28px;border:3px solid #007AFF;border-radius:50%;box-sizing:border-box;position:relative;box-shadow:0 0 0 2px rgba(0,0,0,.45)}
+.current-crosshair:before,.current-crosshair:after{content:"";position:absolute;background:#007AFF;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 .current-crosshair:before{width:3px;height:38px;left:10px;top:-8px}
 .current-crosshair:after{height:3px;width:38px;top:10px;left:-8px}
 .current-crosshair i{position:absolute;width:6px;height:6px;border-radius:50%;background:#111;left:8px;top:8px;z-index:2}
@@ -88,7 +91,7 @@ function updateCurrentPosition(pos){
  if(!currentMarker){
   const icon=L.divIcon({className:'',html:'<div class="current-crosshair"><i></i></div>',iconSize:[28,28],iconAnchor:[14,14]});
   currentMarker=L.marker(ll,{icon,interactive:false,zIndexOffset:1000}).addTo(map);
-  accuracyCircle=L.circle(ll,{radius:currentPosition.accuracy,color:'#fff',weight:1,opacity:.8,fillColor:'#fff',fillOpacity:.10,interactive:false}).addTo(map);
+  accuracyCircle=L.circle(ll,{radius:currentPosition.accuracy,color:'#007AFF',weight:1,opacity:.8,fillColor:'#007AFF',fillOpacity:.10,interactive:false}).addTo(map);
  }else{
   currentMarker.setLatLng(ll);
   accuracyCircle.setLatLng(ll).setRadius(currentPosition.accuracy);
@@ -124,7 +127,7 @@ function redraw(){
   h.points.forEach((p,i)=>{all.push([p.lat,p.lng]);marker(p,i===0?'T'+h.number:'');});
   for(let i=1;i<h.points.length;i++){
    const a=h.points[i-1],b=h.points[i],d=Math.round(dist(a,b));
-   const line=L.polyline([[a.lat,a.lng],[b.lat,b.lng]],{weight:4,color:'#fff'}).addTo(map);
+   const line=L.polyline([[a.lat,a.lng],[b.lat,b.lng]],{weight:4,color:'#007AFF'}).addTo(map);
    layers.push(line);
    const mid=[(a.lat+b.lat)/2,(a.lng+b.lng)/2];
    const lab=L.marker(mid,{icon:L.divIcon({className:'distance-label',html:d+' m',iconSize:null})}).addTo(map);
@@ -199,14 +202,20 @@ function showRounds(){
   const d=new Date(r.date).toLocaleString('de-CH');
   const el=document.createElement('div');
   el.className='card';
-  el.innerHTML=`<button><b>${d}</b><div class="small">${r.holes.length} Loch · ${n} gemessene Schläge</div></button>`;
-  el.querySelector('button').onclick=()=>{
+  el.innerHTML=`<div class="round-row"><button class="round-open"><b>${d}</b><div class="small">${r.holes.length} Loch · ${n} gemessene Schläge</div></button><button class="delete-round">Löschen</button></div>`;
+  el.querySelector('.round-open').onclick=()=>{
    round=r;
    hole=r.holes.length;
    document.getElementById('panel').style.display='none';
    shot.textContent='BALL';
    info.textContent='Gespeicherte Runde';
    redraw();
+  };
+  el.querySelector('.delete-round').onclick=()=>{
+   if(!confirm('Diese Runde wirklich löschen?'))return;
+   rounds=rounds.filter(x=>x.id!==r.id);
+   localStorage.setItem(STORAGE,JSON.stringify(rounds));
+   showRounds();
   };
   box.appendChild(el);
  });
