@@ -183,6 +183,8 @@ document.getElementById('finish').onclick=()=>{
  alert('Runde gespeichert.');
  round=null;
  hole=1;
+ layers.forEach(x=>map.removeLayer(x));
+ layers=[];
  shot.textContent='START';
  info.textContent='Loch 1 · bereit';
 };
