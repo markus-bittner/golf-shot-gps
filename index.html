@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Golf Shot GPS</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111}
+#map{position:fixed;inset:0}
+.top{position:fixed;z-index:1000;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.pill{pointer-events:auto;background:rgba(20,20,20,.82);color:white;border:0;border-radius:18px;padding:10px 14px;font-weight:700;backdrop-filter:blur(8px)}
+#info{max-width:70%}
+.bottom{position:fixed;z-index:1000;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:9px}
+button{font:inherit;border:0;border-radius:16px;padding:16px 10px;font-weight:800;font-size:16px}
+#shot{grid-column:1/3;background:#fff;font-size:24px;padding:20px}
+#next{background:#dedede}
+#finish{background:#222;color:#fff}
+#history{background:rgba(20,20,20,.82);color:#fff}
+#undo{background:rgba(20,20,20,.82);color:#fff}
+.panel{position:fixed;z-index:2000;inset:0;background:#f4f4f4;display:none;overflow:auto;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom))}
+.panel h2{margin-top:0}.card{background:white;border-radius:16px;padding:14px;margin:10px 0}.card button{width:100%;text-align:left;background:white;padding:0}.close{position:sticky;top:0;float:right;background:#222;color:#fff;padding:9px 13px}
+.small{font-size:13px;color:#666;margin-top:5px}
+.distance-label{background:#fff;border:0;border-radius:9px;padding:3px 6px;font-weight:800;box-shadow:0 1px 5px #555}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="top">
+  <div id="info" class="pill">Loch 1 · bereit</div>
+  <div style="display:flex;gap:7px">
+    <button id="undo" class="pill">↶</button>
+    <button id="history" class="pill">Runden</button>
+  </div>
+</div>
+<div class="bottom">
+  <button id="shot">START</button>
+  <button id="next">NEXT HOLE</button>
+  <button id="finish">FINISH</button>
+</div>
+<div id="panel" class="panel">
+  <button id="closePanel" class="close">✕</button>
+  <h2>Gespeicherte Runden</h2>
+  <div id="rounds"></div>
+  <button id="exportBtn">Export / Backup</button>
+  <label style="display:block;margin-top:12px;background:white;border-radius:16px;padding:14px;font-weight:700">
+    Import / Wiederherstellen
+    <input id="importFile" type="file" accept="application/json" style="display:block;margin-top:8px">
+  </label>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const STORAGE='golf-shot-gps-rounds-v1';
+let rounds=JSON.parse(localStorage.getItem(STORAGE)||'[]');
+let round=null, hole=1, points=[], layers=[];
+const map=L.map('map',{zoomControl:false}).setView([47.37,8.2],16);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+ maxZoom:20, attribution:'Tiles © Esri'
+}).addTo(map);
+L.control.zoom({position:'bottomright'}).addTo(map);
+const info=document.getElementById('info'), shot=document.getElementById('shot');
+function dist(a,b){
+ const R=6371000, p=Math.PI/180, dlat=(b.lat-a.lat)*p, dlon=(b.lng-a.lng)*p;
+ const x=Math.sin(dlat/2)**2+Math.cos(a.lat*p)*Math.cos(b.lat*p)*Math.sin(dlon/2)**2;
+ return 2*R*Math.asin(Math.sqrt(x));
+}
+function locate(){
+ return new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(
+  p=>res({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,time:Date.now()}),
+  rej,{enableHighAccuracy:true,timeout:15000,maximumAge:0}));
+}
+function marker(p, label){
+ const m=L.circleMarker([p.lat,p.lng],{radius:7,weight:3,color:'#fff',fillColor:'#111',fillOpacity:1}).addTo(map);
+ layers.push(m);
+ if(label)m.bindTooltip(label,{permanent:true,direction:'top',className:'distance-label'});
+}
+function redraw(){
+ layers.forEach(x=>map.removeLayer(x)); layers=[]; if(!round)return;
+ const all=[];
+ round.holes.forEach(h=>{
+  h.points.forEach((p,i)=>{all.push([p.lat,p.lng]);marker(p,i===0?'T'+h.number:'');});
+  for(let i=1;i<h.points.length;i++){
+   const a=h.points[i-1],b=h.points[i], d=Math.round(dist(a,b));
+   const line=L.polyline([[a.lat,a.lng],[b.lat,b.lng]],{weight:4,color:'#fff'}).addTo(map); layers.push(line);
+   const mid=[(a.lat+b.lat)/2,(a.lng+b.lng)/2];
+   const lab=L.marker(mid,{icon:L.divIcon({className:'distance-label',html:d+' m',iconSize:null})}).addTo(map); layers.push(lab);
+  }
+ });
+ if(all.length)map.fitBounds(all,{padding:[50,50],maxZoom:19});
+}
+function ensureRound(){
+ if(!round) round={id:Date.now(),date:new Date().toISOString(),finished:false,holes:[{number:1,points:[]}]};
+ let h=round.holes.find(x=>x.number===hole); if(!h){h={number:hole,points:[]};round.holes.push(h)} return h;
+}
+async function addPoint(){
+ try{
+  info.textContent='GPS…';
+  const p=await locate(), h=ensureRound();
+  const prev=h.points[h.points.length-1]; h.points.push(p);
+  if(prev) info.textContent=`Loch ${hole} · ${Math.round(dist(prev,p))} m · ±${Math.round(p.accuracy)} m`;
+  else info.textContent=`Loch ${hole} · Tee gespeichert · ±${Math.round(p.accuracy)} m`;
+  shot.textContent='BALL'; map.setView([p.lat,p.lng],18); redraw();
+ }catch(e){info.textContent='GPS nicht verfügbar – Standortfreigabe prüfen';}
+}
+document.getElementById('shot').onclick=addPoint;
+document.getElementById('next').onclick=()=>{
+ if(!round || !ensureRound().points.length){alert('Zuerst START drücken.');return}
+ hole++; ensureRound(); shot.textContent='START'; info.textContent=`Loch ${hole} · bereit`;
+};
+document.getElementById('finish').onclick=()=>{
+ if(!round)return;
+ round.finished=true; round.finishedAt=new Date().toISOString(); rounds.unshift(round); localStorage.setItem(STORAGE,JSON.stringify(rounds));
+ alert('Runde gespeichert.'); round=null; hole=1; shot.textContent='START'; info.textContent='Loch 1 · bereit';
+};
+document.getElementById('undo').onclick=()=>{
+ if(!round)return; const h=ensureRound(); if(h.points.length)h.points.pop();
+ shot.textContent=h.points.length?'BALL':'START'; info.textContent=`Loch ${hole} · letzter Punkt gelöscht`; redraw();
+};
+function showRounds(){
+ const box=document.getElementById('rounds'); box.innerHTML='';
+ if(!rounds.length)box.innerHTML='<p>Noch keine gespeicherten Runden.</p>';
+ rounds.forEach(r=>{
+  const n=r.holes.reduce((s,h)=>s+Math.max(0,h.points.length-1),0);
+  const d=new Date(r.date).toLocaleString('de-CH');
+  const el=document.createElement('div'); el.className='card';
+  el.innerHTML=`<button><b>${d}</b><div class="small">${r.holes.length} Loch · ${n} gemessene Schläge</div></button>`;
+  el.querySelector('button').onclick=()=>{round=r;hole=r.holes.length;document.getElementById('panel').style.display='none';shot.textContent='BALL';info.textContent='Gespeicherte Runde';redraw()};
+  box.appendChild(el);
+ });
+ document.getElementById('panel').style.display='block';
+}
+document.getElementById('history').onclick=showRounds;
+document.getElementById('closePanel').onclick=()=>document.getElementById('panel').style.display='none';
+document.getElementById('exportBtn').onclick=()=>{
+ const blob=new Blob([JSON.stringify(rounds,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='golf-shot-gps-backup.json';a.click();
+};
+document.getElementById('importFile').onchange=async e=>{
+ try{rounds=JSON.parse(await e.target.files[0].text());localStorage.setItem(STORAGE,JSON.stringify(rounds));showRounds()}catch(_){alert('Ungültige Backup-Datei')}
+};
+navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude,p.coords.longitude],18),()=>{}, {enableHighAccuracy:true});
+</script>
+</body>
+</html>
