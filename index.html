@@ -67,6 +67,7 @@ button:disabled{opacity:.45}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const STORAGE='golf-shot-gps-rounds-v1';
+const DRAFT_STORAGE='golf-shot-gps-active-round-v1';
 let rounds=JSON.parse(localStorage.getItem(STORAGE)||'[]');
 let round=null, viewedRound=null, hole=1, layers=[], capturePending=false;
 let currentPosition=null, currentMarker=null, accuracyCircle=null;
@@ -161,6 +162,25 @@ function ensureRound(){
  return h;
 }
 
+function saveDraft(){
+ if(round&&!round.finished)localStorage.setItem(DRAFT_STORAGE,JSON.stringify({round,hole}));
+}
+
+function clearDraft(){
+ localStorage.removeItem(DRAFT_STORAGE);
+}
+
+function restoreDraft(){
+ const saved=JSON.parse(localStorage.getItem(DRAFT_STORAGE)||'null');
+ if(!saved||!saved.round||saved.round.finished||!Array.isArray(saved.round.holes))return;
+ round=saved.round;
+ hole=Number(saved.hole)||round.holes[round.holes.length-1]?.number||1;
+ const h=currentHole();
+ shot.textContent=h&&h.points.length?'BALL':'START';
+ info.textContent=`Loch ${hole} · Runde fortgesetzt`;
+ redraw();
+}
+
 async function addPoint(){
  if(capturePending||viewedRound)return;
  capturePending=true;
@@ -170,6 +190,7 @@ async function addPoint(){
   const p=await locate(),h=ensureRound();
   const prev=h.points[h.points.length-1];
   h.points.push(p);
+  saveDraft();
   if(prev)info.textContent=`Loch ${hole} · ${Math.round(dist(prev,p))} m · ±${Math.round(p.accuracy)} m`;
   else info.textContent=`Loch ${hole} · Tee gespeichert · ±${Math.round(p.accuracy)} m`;
   shot.textContent='BALL';
@@ -192,6 +213,7 @@ document.getElementById('next').onclick=()=>{
  if(!h||!h.points.length)return;
  hole++;
  ensureRound();
+ saveDraft();
  shot.textContent='START';
  info.textContent=`Loch ${hole} · bereit`;
  updateControls();
@@ -203,6 +225,7 @@ document.getElementById('finish').onclick=()=>{
  round.finishedAt=new Date().toISOString();
  rounds.unshift(round);
  localStorage.setItem(STORAGE,JSON.stringify(rounds));
+ clearDraft();
  alert('Runde gespeichert.');
  round=null;
  viewedRound=null;
@@ -219,6 +242,7 @@ document.getElementById('undo').onclick=()=>{
  const h=currentHole();
  if(!h)return;
  if(h.points.length)h.points.pop();
+ saveDraft();
  shot.textContent=h.points.length?'BALL':'START';
  info.textContent=`Loch ${hole} · letzter Punkt gelöscht`;
  redraw();
@@ -290,6 +314,7 @@ if(navigator.geolocation){
   if(first)map.setView([p.coords.latitude,p.coords.longitude],18);
  },()=>{}, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
 }
+restoreDraft();
 updateControls();
 </script>
 </body>
