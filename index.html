@@ -68,6 +68,7 @@ button:disabled{opacity:.45}
 <script>
 const STORAGE='golf-shot-gps-rounds-v1';
 const DRAFT_STORAGE='golf-shot-gps-active-round-v1';
+const POOR_ACCURACY_METERS=30;
 let rounds=JSON.parse(localStorage.getItem(STORAGE)||'[]');
 let round=null, viewedRound=null, hole=1, layers=[], capturePending=false;
 let currentPosition=null, currentMarker=null, accuracyCircle=null;
@@ -85,6 +86,7 @@ function dist(a,b){
 }
 
 function locate(){
+ if(!navigator.geolocation)return Promise.reject({code:0});
  return new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(
   p=>res({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy,time:Date.now()}),
   rej,{enableHighAccuracy:true,timeout:15000,maximumAge:0}));
@@ -112,8 +114,8 @@ function centerOnCurrent(){
  locate().then(p=>{
   currentPosition=p;
   map.setView([p.lat,p.lng],18);
- }).catch(()=>{
-  info.textContent='GPS nicht verfügbar – Standortfreigabe prüfen';
+ }).catch(e=>{
+  info.textContent=gpsErrorMessage(e);
  });
 }
 
@@ -141,6 +143,19 @@ function redraw(){
   }
  });
  if(all.length)map.fitBounds(all,{padding:[50,50],maxZoom:19});
+}
+
+function gpsErrorMessage(error){
+ if(!navigator.geolocation||error&&error.code===0)return'GPS wird von diesem Gerät nicht unterstützt';
+ if(error&&error.code===1)return'Standort nicht erlaubt – bitte in den Einstellungen freigeben';
+ if(error&&error.code===2)return'GPS-Signal nicht verfügbar – bitte kurz warten';
+ if(error&&error.code===3)return'GPS dauert zu lange – bitte erneut versuchen';
+ return'GPS nicht verfügbar – Standortfreigabe prüfen';
+}
+
+function accuracyText(p){
+ const accuracy=Math.round(p.accuracy);
+ return p.accuracy>POOR_ACCURACY_METERS?`GPS ungenau · ±${accuracy} m`:`±${accuracy} m`;
 }
 
 function currentHole(){
@@ -191,13 +206,13 @@ async function addPoint(){
   const prev=h.points[h.points.length-1];
   h.points.push(p);
   saveDraft();
-  if(prev)info.textContent=`Loch ${hole} · ${Math.round(dist(prev,p))} m · ±${Math.round(p.accuracy)} m`;
-  else info.textContent=`Loch ${hole} · Tee gespeichert · ±${Math.round(p.accuracy)} m`;
+  if(prev)info.textContent=`Loch ${hole} · ${Math.round(dist(prev,p))} m · ${accuracyText(p)}`;
+  else info.textContent=`Loch ${hole} · Tee gespeichert · ${accuracyText(p)}`;
   shot.textContent='BALL';
   map.setView([p.lat,p.lng],18);
   redraw();
  }catch(e){
-  info.textContent='GPS nicht verfügbar – Standortfreigabe prüfen';
+  info.textContent=gpsErrorMessage(e);
  }finally{
   capturePending=false;
   updateControls();
@@ -312,7 +327,11 @@ if(navigator.geolocation){
   const first=!currentPosition;
   updateCurrentPosition(p);
   if(first)map.setView([p.coords.latitude,p.coords.longitude],18);
- },()=>{}, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+ },e=>{
+  if(!currentPosition&&!capturePending)info.textContent=gpsErrorMessage(e);
+ }, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+}else{
+ info.textContent=gpsErrorMessage({code:0});
 }
 restoreDraft();
 updateControls();
