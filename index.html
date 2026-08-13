@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -25,6 +25,7 @@ button:disabled{opacity:.45}
 #finish{background:#222;color:#fff}
 #history{background:rgba(20,20,20,.82);color:#fff}
 #undo{background:rgba(20,20,20,.82);color:#fff}
+#clearView{display:none;background:#fff;color:#111}
 .panel{position:fixed;z-index:2000;inset:0;background:#f4f4f4;display:none;overflow:auto;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom))}
 .panel h2{margin-top:0}.card{background:white;border-radius:16px;padding:14px;margin:10px 0}.card button{width:100%;text-align:left;background:white;padding:0}.close{position:sticky;top:0;float:right;background:#222;color:#fff;padding:9px 13px}
 .small{font-size:13px;color:#666;margin-top:5px}
@@ -42,25 +43,26 @@ button:disabled{opacity:.45}
 <body>
 <div id="map"></div>
 <div class="top">
-  <div id="info" class="pill">Loch 1 · bereit</div>
+  <div id="info" class="pill">Hole 1 · Ready</div>
   <div style="display:flex;gap:7px">
+    <button id="clearView" class="pill">CLEAR</button>
     <button id="undo" class="pill">↶</button>
-    <button id="history" class="pill">Runden</button>
+    <button id="history" class="pill">ROUNDS</button>
   </div>
 </div>
-<button id="locateBtn" aria-label="Aktuelle Position anzeigen" title="Aktuelle Position">◎</button>
+<button id="locateBtn" aria-label="Show current position" title="Current position">◎</button>
 <div class="bottom">
-  <button id="shot">START</button>
+  <button id="shot">TEE 1</button>
   <button id="next">NEXT HOLE</button>
   <button id="finish">FINISH</button>
 </div>
 <div id="panel" class="panel">
   <button id="closePanel" class="close">✕</button>
-  <h2>Gespeicherte Runden</h2>
+  <h2>Saved Rounds</h2>
   <div id="rounds"></div>
   <button id="exportBtn">Export / Backup</button>
   <label style="display:block;margin-top:12px;background:white;border-radius:16px;padding:14px;font-weight:700">
-    Import / Wiederherstellen
+    Import / Restore
     <input id="importFile" type="file" accept="application/json" style="display:block;margin-top:8px">
   </label>
 </div>
@@ -96,7 +98,7 @@ function writeStorage(key,value){
   localStorage.setItem(key,JSON.stringify(value));
   return true;
  }catch(_){
-  info.textContent='Speichern nicht möglich – Browserspeicher prüfen';
+  info.textContent='Unable to save – check browser storage';
   return false;
  }
 }
@@ -117,7 +119,7 @@ function validRound(r){
 function showFirstUseHelp(){
  if(firstUseShownThisSession||readStorage(HELP_STORAGE,false))return;
  firstUseShownThisSession=true;
- alert('START am Abschlag → zum Ball gehen → BALL → wiederholen.');
+ alert('TEE at the tee → walk to the ball → BALL → repeat.');
  writeStorage(HELP_STORAGE,true);
 }
 
@@ -188,28 +190,41 @@ function redraw(){
 }
 
 function gpsErrorMessage(error){
- if(!navigator.geolocation||error&&error.code===0)return'GPS wird von diesem Gerät nicht unterstützt';
- if(error&&error.code===1)return'Standort nicht erlaubt – bitte in den Einstellungen freigeben';
- if(error&&error.code===2)return'GPS-Signal nicht verfügbar – bitte kurz warten';
- if(error&&error.code===3)return'GPS dauert zu lange – bitte erneut versuchen';
- return'GPS nicht verfügbar – Standortfreigabe prüfen';
+ if(!navigator.geolocation||error&&error.code===0)return'GPS is not supported on this device';
+ if(error&&error.code===1)return'Location denied – allow it in Settings';
+ if(error&&error.code===2)return'GPS signal unavailable – please wait';
+ if(error&&error.code===3)return'GPS timed out – try again';
+ return'GPS unavailable – check location access';
 }
 
 function accuracyText(p){
  const accuracy=Math.round(p.accuracy);
- return p.accuracy>POOR_ACCURACY_METERS?`GPS ungenau · ±${accuracy} m`:`±${accuracy} m`;
+ return p.accuracy>POOR_ACCURACY_METERS?`Low GPS accuracy · ±${accuracy} m`:`±${accuracy} m`;
 }
 
 function currentHole(){
  return round&&round.holes.find(x=>x.number===hole);
 }
 
+function nextPositionLabel(){
+ const h=currentHole(), count=h?h.points.length:0;
+ return count?`BALL ${count}`:`TEE ${hole}`;
+}
+
+function updatePositionLabel(){
+ shot.textContent=nextPositionLabel();
+}
+
 function updateControls(){
  const h=currentHole(), hasPoint=!!(h&&h.points.length);
+ const viewing=!!viewedRound;
  shot.disabled=capturePending||!!viewedRound;
  document.getElementById('undo').disabled=capturePending||!!viewedRound||!hasPoint;
  document.getElementById('next').disabled=capturePending||!!viewedRound||!hasPoint;
  document.getElementById('finish').disabled=capturePending||!!viewedRound||!round||!round.holes.some(x=>x.points.length);
+ document.getElementById('clearView').style.display=viewing?'block':'none';
+ document.getElementById('undo').style.display=viewing?'none':'';
+ document.getElementById('history').style.display=viewing?'none':'';
 }
 
 function ensureRound(){
@@ -232,9 +247,8 @@ function restoreDraft(){
  if(!saved||!validRound(saved.round)||saved.round.finished)return;
  round=saved.round;
  hole=Number(saved.hole)||round.holes[round.holes.length-1]?.number||1;
- const h=currentHole();
- shot.textContent=h&&h.points.length?'BALL':'START';
- info.textContent=`Loch ${hole} · Runde fortgesetzt`;
+ updatePositionLabel();
+ info.textContent=`Hole ${hole} · Round restored`;
  redraw();
 }
 
@@ -248,9 +262,9 @@ async function addPoint(){
   const prev=h.points[h.points.length-1];
   h.points.push(p);
   saveDraft();
-  if(prev)info.textContent=`Loch ${hole} · ${Math.round(dist(prev,p))} m · ${accuracyText(p)}`;
-  else info.textContent=`Loch ${hole} · Tee gespeichert · ${accuracyText(p)}`;
-  shot.textContent='BALL';
+  if(prev)info.textContent=`Hole ${hole} · ${Math.round(dist(prev,p))} m · ${accuracyText(p)}`;
+  else info.textContent=`Hole ${hole} · Tee saved · ${accuracyText(p)}`;
+  updatePositionLabel();
   map.setView([p.lat,p.lng],18);
   redraw();
  }catch(e){
@@ -271,8 +285,8 @@ document.getElementById('next').onclick=()=>{
  hole++;
  ensureRound();
  saveDraft();
- shot.textContent='START';
- info.textContent=`Loch ${hole} · bereit`;
+ updatePositionLabel();
+ info.textContent=`Hole ${hole} · Ready`;
  updateControls();
 };
 
@@ -290,14 +304,14 @@ document.getElementById('finish').onclick=()=>{
   return;
  }
  clearDraft();
- alert('Runde gespeichert.');
+ alert('Round saved.');
  round=null;
  viewedRound=null;
  hole=1;
  layers.forEach(x=>map.removeLayer(x));
  layers=[];
- shot.textContent='START';
- info.textContent='Loch 1 · bereit';
+ updatePositionLabel();
+ info.textContent='Hole 1 · Ready';
  updateControls();
 };
 
@@ -307,8 +321,8 @@ document.getElementById('undo').onclick=()=>{
  if(!h)return;
  if(h.points.length)h.points.pop();
  saveDraft();
- shot.textContent=h.points.length?'BALL':'START';
- info.textContent=`Loch ${hole} · letzter Punkt gelöscht`;
+ updatePositionLabel();
+ info.textContent=`Hole ${hole} · Last point removed`;
  redraw();
  updateControls();
 };
@@ -316,22 +330,27 @@ document.getElementById('undo').onclick=()=>{
 function showRounds(){
  const box=document.getElementById('rounds');
  box.innerHTML='';
- if(!rounds.length)box.innerHTML='<p>Noch keine gespeicherten Runden.</p>';
+ if(!rounds.length)box.innerHTML='<p>No saved rounds yet.</p>';
  rounds.forEach(r=>{
   const n=r.holes.reduce((s,h)=>s+Math.max(0,h.points.length-1),0);
-  const d=new Date(r.date).toLocaleString('de-CH');
+  const d=roundTitle(r);
   const el=document.createElement('div');
   el.className='card';
-  el.innerHTML=`<div class="round-row"><button class="round-open"><b>${d}</b><div class="small">${r.holes.length} Loch · ${n} gemessene Schläge</div></button><button class="delete-round">Löschen</button></div>`;
+  el.innerHTML=`<div class="round-row"><button class="round-open"><b>${d}</b><div class="small">${r.holes.length} ${r.holes.length===1?'hole':'holes'} · ${n} measured ${n===1?'shot':'shots'}</div></button><button class="delete-round">DELETE</button></div>`;
   el.querySelector('.round-open').onclick=()=>{
+   if(round){
+    info.textContent='Finish the active round before viewing a saved round';
+    document.getElementById('panel').style.display='none';
+    return;
+   }
    viewedRound=r;
    document.getElementById('panel').style.display='none';
-   info.textContent='Gespeicherte Runde · nur ansehen';
+   info.textContent=d;
    redraw();
    updateControls();
   };
   el.querySelector('.delete-round').onclick=()=>{
-   if(!confirm('Diese Runde wirklich löschen?'))return;
+   if(!confirm('Delete this round permanently?'))return;
    const updated=rounds.filter(x=>x.id!==r.id);
    if(!writeStorage(STORAGE,updated))return;
    rounds=updated;
@@ -342,17 +361,28 @@ function showRounds(){
  document.getElementById('panel').style.display='block';
 }
 
+function roundTitle(r){
+ return new Intl.DateTimeFormat('en-GB',{
+  day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'
+ }).format(new Date(r.date));
+}
+
+function clearSavedView(){
+ if(!viewedRound)return;
+ viewedRound=null;
+ hole=1;
+ redraw();
+ updatePositionLabel();
+ info.textContent='Hole 1 · Ready';
+ updateControls();
+}
+
 document.getElementById('history').onclick=showRounds;
 document.getElementById('closePanel').onclick=()=>{
  document.getElementById('panel').style.display='none';
- if(viewedRound){
-  viewedRound=null;
-  info.textContent=round?`Loch ${hole} · bereit`:'Loch 1 · bereit';
-  shot.textContent=currentHole()&&currentHole().points.length?'BALL':'START';
-  redraw();
-  updateControls();
- }
+ clearSavedView();
 };
+document.getElementById('clearView').onclick=clearSavedView;
 
 document.getElementById('exportBtn').onclick=()=>{
  const blob=new Blob([JSON.stringify(rounds,null,2)],{type:'application/json'});
@@ -370,7 +400,7 @@ document.getElementById('importFile').onchange=async e=>{
   rounds=imported;
   showRounds();
  }catch(_){
-  alert('Ungültige Backup-Datei');
+  alert('Invalid backup file');
  }
 };
 
