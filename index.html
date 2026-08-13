@@ -20,6 +20,7 @@ body.saved-view:after{content:"";position:fixed;z-index:1900;inset:0;border:3px 
 #locateBtn{position:fixed;z-index:1000;right:12px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 178px);width:52px;height:52px;border-radius:50%;padding:0;background:rgba(20,20,20,.86);color:#fff;font-size:25px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 .bottom{position:fixed;z-index:1000;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:9px}
 button{font:inherit;border:0;border-radius:16px;padding:16px 10px;font-weight:800;font-size:16px}
+button,.top,.bottom,.panel,.panel *,.modal,.modal *{touch-action:manipulation}
 button:disabled{opacity:.45}
 #shot{grid-column:1/3;background:#fff;font-size:24px;padding:20px}
 #next{background:#dedede}
@@ -28,13 +29,16 @@ button:disabled{opacity:.45}
 #undo{background:rgba(20,20,20,.82);color:#fff;display:flex;align-items:center;justify-content:center;min-width:48px}
 #undo svg{width:24px;height:24px;display:block}
 #clearView{display:none;background:#fff;color:#111}
-.panel{position:fixed;z-index:2000;inset:0;background:#f4f4f4;display:none;overflow:auto;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom))}
-.panel h2{margin-top:0}.card{background:white;border-radius:16px;padding:14px;margin:10px 0}.card button{width:100%;text-align:left;background:white;padding:0}.close{position:sticky;top:0;float:right;background:#222;color:#fff;padding:9px 13px}
-.small{font-size:13px;color:#666;margin-top:5px}
+.panel{position:fixed;z-index:2000;inset:0;background:#f4f4f4;display:none;flex-direction:column;overflow:hidden;padding:calc(16px + env(safe-area-inset-top)) 16px calc(12px + env(safe-area-inset-bottom));box-sizing:border-box}
+.panel-header{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;margin-bottom:8px}.panel h2{margin:0;font-size:22px}.close{background:#222;color:#fff;padding:9px 13px;min-width:44px;min-height:44px}
+#rounds{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 2px 6px}
+.card{background:white;border-radius:12px;padding:8px 10px;margin:6px 0}.card button{width:100%;text-align:left;background:white;padding:0}.small{font-size:12px;color:#666;margin-top:2px}
 .round-row{display:flex;align-items:center;gap:10px}
-.round-open{flex:1}
+.round-open{flex:1;min-height:44px;font-size:14px}
 .delete-round{width:44px!important;height:44px;flex:0 0 auto!important;padding:10px!important;border-radius:12px!important;color:#FF3B30!important;background:#fff1f0!important;text-align:center!important;display:flex;align-items:center;justify-content:center}
 .delete-round svg{width:22px;height:22px;display:block}
+.panel-actions{flex:0 0 auto;display:grid;gap:7px;padding-top:8px;border-top:1px solid #ddd}.panel-actions button{width:100%;padding:12px;background:#fff;color:#111;border-radius:12px;font-size:14px}
+.modal{position:fixed;z-index:3000;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.58);box-sizing:border-box}.modal.open{display:flex}.modal-card{width:min(100%,420px);max-height:calc(100vh - 40px);overflow:auto;background:#f4f4f4;border-radius:18px;padding:18px;box-sizing:border-box}.modal-card h2{margin:0 0 10px}.modal-card p{margin:8px 0;line-height:1.35}.modal-card ol{padding-left:22px;line-height:1.35}.modal-actions{display:grid;gap:8px;margin-top:16px}.modal-actions button,.modal-action{width:100%;background:#fff;color:#111}.modal-actions .primary{background:#007AFF;color:#fff}.modal-actions .cancel{background:#222;color:#fff}.modal-note{font-size:13px;color:#666;word-break:break-word}
 .distance-label{background:#fff;border:0;border-radius:9px;padding:3px 6px;font-weight:800;box-shadow:0 1px 5px #555}
 .point-label{background:#fff;border:0;border-radius:7px;padding:2px 5px;font-size:12px;font-weight:800;box-shadow:0 1px 4px #555}
 .leaflet-top.leaflet-right{top:50%;right:12px;transform:translateY(-50%)}
@@ -62,15 +66,19 @@ button:disabled{opacity:.45}
   <button id="finish">FINISH</button>
 </div>
 <div id="panel" class="panel">
-  <button id="closePanel" class="close">✕</button>
-  <h2>Saved Rounds</h2>
+  <div class="panel-header"><h2>Saved Rounds</h2><button id="closePanel" class="close" aria-label="Close saved rounds">✕</button></div>
   <div id="rounds"></div>
-  <button id="exportBtn">Export / Backup</button>
-  <label style="display:block;margin-top:12px;background:white;border-radius:16px;padding:14px;font-weight:700">
-    Import / Restore
-    <input id="importFile" type="file" accept="application/json" style="display:block;margin-top:8px">
-  </label>
+  <div class="panel-actions">
+    <button data-dialog="exportDialog">EXPORT</button>
+    <button data-dialog="shareDialog">SHARE APP</button>
+    <button data-dialog="coffeeDialog">BUY ME A COFFEE</button>
+    <button data-dialog="helpDialog">HELP</button>
+  </div>
 </div>
+<div id="exportDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><div class="modal-card"><h2 id="exportTitle">Export</h2><p>Saved rounds are stored locally on this device. Export a backup before changing devices or clearing browser data.</p><div class="modal-actions"><button id="exportBtn" class="primary">EXPORT BACKUP</button><button id="importBtn">IMPORT BACKUP</button><button class="cancel" data-close-dialog>CANCEL</button></div><input id="importFile" type="file" accept="application/json" hidden></div></div>
+<div id="shareDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle"><div class="modal-card"><h2 id="shareTitle">Share App</h2><p>Share Golf Shot GPS with another golfer.</p><p class="modal-note">https://markus-bittner.github.io/golf-shot-gps/</p><p id="shareFeedback" class="modal-note" aria-live="polite"></p><div class="modal-actions"><button id="shareBtn" class="primary">SHARE</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
+<div id="coffeeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="coffeeTitle"><div class="modal-card"><h2 id="coffeeTitle">Buy Me a Coffee</h2><p>Golf Shot GPS is free to use. Optional support will help keep it simple and available.</p><div class="modal-actions"><button disabled>SUPPORT LINK NOT CONFIGURED</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
+<div id="helpDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card"><h2 id="helpTitle">Help</h2><ol><li>At the first tee, tap <b>START ROUND · TEE 1</b>.</li><li>Hit your shot and walk to the ball.</li><li>Tap <b>SHOT 1</b>, then repeat for each shot.</li><li>Tap <b>NEXT HOLE</b> when the hole is finished.</li><li>Tap <b>FINISH</b> after the round.</li></ol><p><b>Undo</b> removes the last position. The GPS button recenters the map. <b>SAVED ROUNDS</b> opens completed rounds. <b>CLEAR</b> closes a saved-round view; the red trash icon permanently deletes it.</p><p class="modal-note">GPS accuracy depends on your phone and surroundings.</p><div class="modal-actions"><button class="cancel" data-close-dialog>CLOSE</button></div></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const STORAGE='golf-shot-gps-rounds-v1';
@@ -371,7 +379,7 @@ function showRounds(){
   };
   box.appendChild(el);
  });
- document.getElementById('panel').style.display='block';
+ document.getElementById('panel').style.display='flex';
 }
 
 function roundTitle(r){
@@ -397,13 +405,41 @@ document.getElementById('closePanel').onclick=()=>{
 };
 document.getElementById('clearView').onclick=clearSavedView;
 
+function openDialog(id){
+ const dialog=document.getElementById(id);
+ if(!dialog)return;
+ dialog.classList.add('open');
+ const first=dialog.querySelector('button:not(:disabled)');
+ if(first)first.focus();
+}
+
+function closeDialog(dialog){
+ if(dialog)dialog.classList.remove('open');
+}
+
+document.querySelectorAll('[data-dialog]').forEach(button=>{
+ button.onclick=()=>openDialog(button.dataset.dialog);
+});
+document.querySelectorAll('[data-close-dialog]').forEach(button=>{
+ button.onclick=()=>closeDialog(button.closest('.modal'));
+});
+document.querySelectorAll('.modal').forEach(dialog=>{
+ dialog.onclick=e=>{if(e.target===dialog)closeDialog(dialog)};
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape')closeDialog(document.querySelector('.modal.open'));
+});
+
 document.getElementById('exportBtn').onclick=()=>{
  const blob=new Blob([JSON.stringify(rounds,null,2)],{type:'application/json'});
  const a=document.createElement('a');
  a.href=URL.createObjectURL(blob);
  a.download='golf-shot-gps-backup.json';
  a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 };
+
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
 
 document.getElementById('importFile').onchange=async e=>{
  try{
@@ -411,9 +447,27 @@ document.getElementById('importFile').onchange=async e=>{
   if(!Array.isArray(imported)||!imported.every(validRound))throw new Error('invalid backup');
   if(!writeStorage(STORAGE,imported))return;
   rounds=imported;
+  closeDialog(document.getElementById('exportDialog'));
   showRounds();
  }catch(_){
   alert('Invalid backup file');
+ }
+};
+
+document.getElementById('shareBtn').onclick=async()=>{
+ const url='https://markus-bittner.github.io/golf-shot-gps/';
+ const feedback=document.getElementById('shareFeedback');
+ feedback.textContent='';
+ try{
+  if(navigator.share){
+   await navigator.share({title:'Golf Shot GPS',text:'Track golf shot positions with Golf Shot GPS.',url});
+   feedback.textContent='Shared.';
+  }else{
+   await navigator.clipboard.writeText(url);
+   feedback.textContent='App link copied.';
+  }
+ }catch(e){
+  if(e.name!=='AbortError')feedback.textContent='Could not share. Copy the app link above.';
  }
 };
 
