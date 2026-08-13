@@ -19,6 +19,7 @@ html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Seg
 #locateBtn{position:fixed;z-index:1000;right:12px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 178px);width:52px;height:52px;border-radius:50%;padding:0;background:rgba(20,20,20,.86);color:#fff;font-size:25px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 .bottom{position:fixed;z-index:1000;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:9px}
 button{font:inherit;border:0;border-radius:16px;padding:16px 10px;font-weight:800;font-size:16px}
+button:disabled{opacity:.45}
 #shot{grid-column:1/3;background:#fff;font-size:24px;padding:20px}
 #next{background:#dedede}
 #finish{background:#222;color:#fff}
@@ -67,7 +68,7 @@ button{font:inherit;border:0;border-radius:16px;padding:16px 10px;font-weight:80
 <script>
 const STORAGE='golf-shot-gps-rounds-v1';
 let rounds=JSON.parse(localStorage.getItem(STORAGE)||'[]');
-let round=null, hole=1, points=[], layers=[];
+let round=null, viewedRound=null, hole=1, layers=[], capturePending=false;
 let currentPosition=null, currentMarker=null, accuracyCircle=null;
 const map=L.map('map',{zoomControl:false}).setView([47.37,8.2],16);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
@@ -124,9 +125,10 @@ function marker(p,label){
 function redraw(){
  layers.forEach(x=>map.removeLayer(x));
  layers=[];
- if(!round)return;
+ const displayedRound=viewedRound||round;
+ if(!displayedRound)return;
  const all=[];
- round.holes.forEach(h=>{
+ displayedRound.holes.forEach(h=>{
   h.points.forEach((p,i)=>{all.push([p.lat,p.lng]);marker(p,i===0?'T'+h.number:'');});
   for(let i=1;i<h.points.length;i++){
    const a=h.points[i-1],b=h.points[i],d=Math.round(dist(a,b));
@@ -140,6 +142,18 @@ function redraw(){
  if(all.length)map.fitBounds(all,{padding:[50,50],maxZoom:19});
 }
 
+function currentHole(){
+ return round&&round.holes.find(x=>x.number===hole);
+}
+
+function updateControls(){
+ const h=currentHole(), hasPoint=!!(h&&h.points.length);
+ shot.disabled=capturePending||!!viewedRound;
+ document.getElementById('undo').disabled=capturePending||!!viewedRound||!hasPoint;
+ document.getElementById('next').disabled=capturePending||!!viewedRound||!hasPoint;
+ document.getElementById('finish').disabled=capturePending||!!viewedRound||!round||!round.holes.some(x=>x.points.length);
+}
+
 function ensureRound(){
  if(!round)round={id:Date.now(),date:new Date().toISOString(),finished:false,holes:[{number:1,points:[]}]};
  let h=round.holes.find(x=>x.number===hole);
@@ -148,6 +162,9 @@ function ensureRound(){
 }
 
 async function addPoint(){
+ if(capturePending||viewedRound)return;
+ capturePending=true;
+ updateControls();
  try{
   info.textContent='GPS…';
   const p=await locate(),h=ensureRound();
@@ -160,6 +177,9 @@ async function addPoint(){
   redraw();
  }catch(e){
   info.textContent='GPS nicht verfügbar – Standortfreigabe prüfen';
+ }finally{
+  capturePending=false;
+  updateControls();
  }
 }
 
@@ -167,35 +187,42 @@ document.getElementById('shot').onclick=addPoint;
 document.getElementById('locateBtn').onclick=centerOnCurrent;
 
 document.getElementById('next').onclick=()=>{
- if(!round || !ensureRound().points.length){alert('Zuerst START drücken.');return}
+ if(capturePending||viewedRound)return;
+ const h=currentHole();
+ if(!h||!h.points.length)return;
  hole++;
  ensureRound();
  shot.textContent='START';
  info.textContent=`Loch ${hole} · bereit`;
+ updateControls();
 };
 
 document.getElementById('finish').onclick=()=>{
- if(!round)return;
+ if(capturePending||viewedRound||!round||!round.holes.some(x=>x.points.length))return;
  round.finished=true;
  round.finishedAt=new Date().toISOString();
  rounds.unshift(round);
  localStorage.setItem(STORAGE,JSON.stringify(rounds));
  alert('Runde gespeichert.');
  round=null;
+ viewedRound=null;
  hole=1;
  layers.forEach(x=>map.removeLayer(x));
  layers=[];
  shot.textContent='START';
  info.textContent='Loch 1 · bereit';
+ updateControls();
 };
 
 document.getElementById('undo').onclick=()=>{
- if(!round)return;
- const h=ensureRound();
+ if(capturePending||viewedRound)return;
+ const h=currentHole();
+ if(!h)return;
  if(h.points.length)h.points.pop();
  shot.textContent=h.points.length?'BALL':'START';
  info.textContent=`Loch ${hole} · letzter Punkt gelöscht`;
  redraw();
+ updateControls();
 };
 
 function showRounds(){
@@ -209,12 +236,11 @@ function showRounds(){
   el.className='card';
   el.innerHTML=`<div class="round-row"><button class="round-open"><b>${d}</b><div class="small">${r.holes.length} Loch · ${n} gemessene Schläge</div></button><button class="delete-round">Löschen</button></div>`;
   el.querySelector('.round-open').onclick=()=>{
-   round=r;
-   hole=r.holes.length;
+   viewedRound=r;
    document.getElementById('panel').style.display='none';
-   shot.textContent='BALL';
-   info.textContent='Gespeicherte Runde';
+   info.textContent='Gespeicherte Runde · nur ansehen';
    redraw();
+   updateControls();
   };
   el.querySelector('.delete-round').onclick=()=>{
    if(!confirm('Diese Runde wirklich löschen?'))return;
@@ -228,7 +254,16 @@ function showRounds(){
 }
 
 document.getElementById('history').onclick=showRounds;
-document.getElementById('closePanel').onclick=()=>document.getElementById('panel').style.display='none';
+document.getElementById('closePanel').onclick=()=>{
+ document.getElementById('panel').style.display='none';
+ if(viewedRound){
+  viewedRound=null;
+  info.textContent=round?`Loch ${hole} · bereit`:'Loch 1 · bereit';
+  shot.textContent=currentHole()&&currentHole().points.length?'BALL':'START';
+  redraw();
+  updateControls();
+ }
+};
 
 document.getElementById('exportBtn').onclick=()=>{
  const blob=new Blob([JSON.stringify(rounds,null,2)],{type:'application/json'});
@@ -255,6 +290,7 @@ if(navigator.geolocation){
   if(first)map.setView([p.coords.latitude,p.coords.longitude],18);
  },()=>{}, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
 }
+updateControls();
 </script>
 </body>
 </html>
