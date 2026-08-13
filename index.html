@@ -13,6 +13,7 @@
 <style>
 html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111}
 #map{position:fixed;inset:0}
+body.saved-view:after{content:"";position:fixed;z-index:1900;inset:0;border:3px solid #FFD60A;box-shadow:inset 0 0 12px rgba(255,214,10,.7);pointer-events:none;box-sizing:border-box}
 .top{position:fixed;z-index:1000;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
 .pill{pointer-events:auto;background:rgba(20,20,20,.82);color:white;border:0;border-radius:18px;padding:10px 14px;font-weight:700;backdrop-filter:blur(8px)}
 #info{max-width:70%}
@@ -24,15 +25,19 @@ button:disabled{opacity:.45}
 #next{background:#dedede}
 #finish{background:#222;color:#fff}
 #history{background:rgba(20,20,20,.82);color:#fff}
-#undo{background:rgba(20,20,20,.82);color:#fff}
+#undo{background:rgba(20,20,20,.82);color:#fff;display:flex;align-items:center;justify-content:center;min-width:48px}
+#undo svg{width:24px;height:24px;display:block}
 #clearView{display:none;background:#fff;color:#111}
 .panel{position:fixed;z-index:2000;inset:0;background:#f4f4f4;display:none;overflow:auto;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom))}
 .panel h2{margin-top:0}.card{background:white;border-radius:16px;padding:14px;margin:10px 0}.card button{width:100%;text-align:left;background:white;padding:0}.close{position:sticky;top:0;float:right;background:#222;color:#fff;padding:9px 13px}
 .small{font-size:13px;color:#666;margin-top:5px}
 .round-row{display:flex;align-items:center;gap:10px}
 .round-open{flex:1}
-.delete-round{width:auto!important;flex:0 0 auto!important;padding:10px 12px!important;border-radius:12px!important;color:#007AFF!important;font-weight:800!important;background:#f2f2f7!important;text-align:center!important}
+.delete-round{width:44px!important;height:44px;flex:0 0 auto!important;padding:10px!important;border-radius:12px!important;color:#FF3B30!important;background:#fff1f0!important;text-align:center!important;display:flex;align-items:center;justify-content:center}
+.delete-round svg{width:22px;height:22px;display:block}
 .distance-label{background:#fff;border:0;border-radius:9px;padding:3px 6px;font-weight:800;box-shadow:0 1px 5px #555}
+.point-label{background:#fff;border:0;border-radius:7px;padding:2px 5px;font-size:12px;font-weight:800;box-shadow:0 1px 4px #555}
+.leaflet-top.leaflet-right{top:50%;right:12px;transform:translateY(-50%)}
 .current-crosshair{width:28px;height:28px;border:3px solid #007AFF;border-radius:50%;box-sizing:border-box;position:relative;box-shadow:0 0 0 2px rgba(0,0,0,.45)}
 .current-crosshair:before,.current-crosshair:after{content:"";position:absolute;background:#007AFF;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 .current-crosshair:before{width:3px;height:38px;left:10px;top:-8px}
@@ -46,13 +51,13 @@ button:disabled{opacity:.45}
   <div id="info" class="pill">Hole 1 · Ready</div>
   <div style="display:flex;gap:7px">
     <button id="clearView" class="pill">CLEAR</button>
-    <button id="undo" class="pill">↶</button>
-    <button id="history" class="pill">ROUNDS</button>
+    <button id="undo" class="pill" aria-label="Undo last recorded position" title="Undo last recorded position"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H5v-4M5.4 7.2A8 8 0 1 1 4 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button id="history" class="pill">SAVED ROUNDS</button>
   </div>
 </div>
 <button id="locateBtn" aria-label="Show current position" title="Current position">◎</button>
 <div class="bottom">
-  <button id="shot">TEE 1</button>
+  <button id="shot">START ROUND · TEE 1</button>
   <button id="next">NEXT HOLE</button>
   <button id="finish">FINISH</button>
 </div>
@@ -81,7 +86,7 @@ const map=L.map('map',{zoomControl:false}).setView([47.37,8.2],16);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
  maxZoom:20, attribution:'Tiles © Esri'
 }).addTo(map);
-L.control.zoom({position:'bottomright'}).addTo(map);
+L.control.zoom({position:'topright'}).addTo(map);
 const info=document.getElementById('info'), shot=document.getElementById('shot');
 
 function readStorage(key,fallback){
@@ -119,7 +124,7 @@ function validRound(r){
 function showFirstUseHelp(){
  if(firstUseShownThisSession||readStorage(HELP_STORAGE,false))return;
  firstUseShownThisSession=true;
- alert('TEE at the tee → walk to the ball → BALL → repeat.');
+ alert('START ROUND at the tee → walk to the ball → SHOT → repeat.');
  writeStorage(HELP_STORAGE,true);
 }
 
@@ -166,7 +171,7 @@ function centerOnCurrent(){
 function marker(p,label){
  const m=L.circleMarker([p.lat,p.lng],{radius:7,weight:3,color:'#fff',fillColor:'#111',fillOpacity:1}).addTo(map);
  layers.push(m);
- if(label)m.bindTooltip(label,{permanent:true,direction:'top',className:'distance-label'});
+ if(label)m.bindTooltip(label,{permanent:true,direction:'top',className:'point-label'});
 }
 
 function redraw(){
@@ -176,7 +181,7 @@ function redraw(){
  if(!displayedRound)return;
  const all=[];
  displayedRound.holes.forEach(h=>{
-  h.points.forEach((p,i)=>{all.push([p.lat,p.lng]);marker(p,i===0?'T'+h.number:'');});
+  h.points.forEach((p,i)=>{all.push([p.lat,p.lng]);marker(p,i===0?'T'+h.number:'S'+i);});
   for(let i=1;i<h.points.length;i++){
    const a=h.points[i-1],b=h.points[i],d=Math.round(dist(a,b));
    const line=L.polyline([[a.lat,a.lng],[b.lat,b.lng]],{weight:4,color:'#007AFF'}).addTo(map);
@@ -208,7 +213,8 @@ function currentHole(){
 
 function nextPositionLabel(){
  const h=currentHole(), count=h?h.points.length:0;
- return count?`BALL ${count}`:`TEE ${hole}`;
+ if(!round)return'START ROUND · TEE 1';
+ return count?`SHOT ${count}`:`TEE ${hole}`;
 }
 
 function updatePositionLabel(){
@@ -225,6 +231,7 @@ function updateControls(){
  document.getElementById('clearView').style.display=viewing?'block':'none';
  document.getElementById('undo').style.display=viewing?'none':'';
  document.getElementById('history').style.display=viewing?'none':'';
+ document.body.classList.toggle('saved-view',viewing);
 }
 
 function ensureRound(){
@@ -320,9 +327,15 @@ document.getElementById('undo').onclick=()=>{
  const h=currentHole();
  if(!h)return;
  if(h.points.length)h.points.pop();
- saveDraft();
+ if(!round.holes.some(x=>x.points.length)){
+  round=null;
+  hole=1;
+  clearDraft();
+ }else{
+  saveDraft();
+ }
  updatePositionLabel();
- info.textContent=`Hole ${hole} · Last point removed`;
+ info.textContent=round?`Hole ${hole} · Last point removed`:'Hole 1 · Ready';
  redraw();
  updateControls();
 };
@@ -336,7 +349,7 @@ function showRounds(){
   const d=roundTitle(r);
   const el=document.createElement('div');
   el.className='card';
-  el.innerHTML=`<div class="round-row"><button class="round-open"><b>${d}</b><div class="small">${r.holes.length} ${r.holes.length===1?'hole':'holes'} · ${n} measured ${n===1?'shot':'shots'}</div></button><button class="delete-round">DELETE</button></div>`;
+  el.innerHTML=`<div class="round-row"><button class="round-open"><b>${d}</b><div class="small">${r.holes.length} ${r.holes.length===1?'hole':'holes'} · ${n} measured ${n===1?'shot':'shots'}</div></button><button class="delete-round" aria-label="Delete round" title="Delete round"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>`;
   el.querySelector('.round-open').onclick=()=>{
    if(round){
     info.textContent='Finish the active round before viewing a saved round';
