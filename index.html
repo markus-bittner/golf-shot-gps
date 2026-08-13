@@ -68,16 +68,58 @@ button:disabled{opacity:.45}
 <script>
 const STORAGE='golf-shot-gps-rounds-v1';
 const DRAFT_STORAGE='golf-shot-gps-active-round-v1';
+const HELP_STORAGE='golf-shot-gps-help-seen-v1';
 const POOR_ACCURACY_METERS=30;
-let rounds=JSON.parse(localStorage.getItem(STORAGE)||'[]');
+let rounds=readStorage(STORAGE,[]);
+rounds=Array.isArray(rounds)?rounds.filter(validRound):[];
 let round=null, viewedRound=null, hole=1, layers=[], capturePending=false;
 let currentPosition=null, currentMarker=null, accuracyCircle=null;
+let firstUseShownThisSession=false;
 const map=L.map('map',{zoomControl:false}).setView([47.37,8.2],16);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
  maxZoom:20, attribution:'Tiles © Esri'
 }).addTo(map);
 L.control.zoom({position:'bottomright'}).addTo(map);
 const info=document.getElementById('info'), shot=document.getElementById('shot');
+
+function readStorage(key,fallback){
+ try{
+  const value=localStorage.getItem(key);
+  return value===null?fallback:JSON.parse(value);
+ }catch(_){
+  return fallback;
+ }
+}
+
+function writeStorage(key,value){
+ try{
+  localStorage.setItem(key,JSON.stringify(value));
+  return true;
+ }catch(_){
+  info.textContent='Speichern nicht möglich – Browserspeicher prüfen';
+  return false;
+ }
+}
+
+function removeStorage(key){
+ try{localStorage.removeItem(key)}catch(_){}
+}
+
+function validPoint(p){
+ return !!p&&Number.isFinite(p.lat)&&Number.isFinite(p.lng);
+}
+
+function validRound(r){
+ return !!r&&Array.isArray(r.holes)&&r.holes.every(h=>
+  !!h&&Number.isFinite(Number(h.number))&&Array.isArray(h.points)&&h.points.every(validPoint));
+}
+
+function showFirstUseHelp(){
+ if(firstUseShownThisSession||readStorage(HELP_STORAGE,false))return;
+ firstUseShownThisSession=true;
+ alert('START am Abschlag → zum Ball gehen → BALL → wiederholen.');
+ writeStorage(HELP_STORAGE,true);
+}
 
 function dist(a,b){
  const R=6371000, p=Math.PI/180, dlat=(b.lat-a.lat)*p, dlon=(b.lng-a.lng)*p;
@@ -178,16 +220,16 @@ function ensureRound(){
 }
 
 function saveDraft(){
- if(round&&!round.finished)localStorage.setItem(DRAFT_STORAGE,JSON.stringify({round,hole}));
+ if(round&&!round.finished)writeStorage(DRAFT_STORAGE,{round,hole});
 }
 
 function clearDraft(){
- localStorage.removeItem(DRAFT_STORAGE);
+ removeStorage(DRAFT_STORAGE);
 }
 
 function restoreDraft(){
- const saved=JSON.parse(localStorage.getItem(DRAFT_STORAGE)||'null');
- if(!saved||!saved.round||saved.round.finished||!Array.isArray(saved.round.holes))return;
+ const saved=readStorage(DRAFT_STORAGE,null);
+ if(!saved||!validRound(saved.round)||saved.round.finished)return;
  round=saved.round;
  hole=Number(saved.hole)||round.holes[round.holes.length-1]?.number||1;
  const h=currentHole();
@@ -239,7 +281,14 @@ document.getElementById('finish').onclick=()=>{
  round.finished=true;
  round.finishedAt=new Date().toISOString();
  rounds.unshift(round);
- localStorage.setItem(STORAGE,JSON.stringify(rounds));
+ if(!writeStorage(STORAGE,rounds)){
+  rounds.shift();
+  round.finished=false;
+  delete round.finishedAt;
+  saveDraft();
+  updateControls();
+  return;
+ }
  clearDraft();
  alert('Runde gespeichert.');
  round=null;
@@ -283,8 +332,9 @@ function showRounds(){
   };
   el.querySelector('.delete-round').onclick=()=>{
    if(!confirm('Diese Runde wirklich löschen?'))return;
-   rounds=rounds.filter(x=>x.id!==r.id);
-   localStorage.setItem(STORAGE,JSON.stringify(rounds));
+   const updated=rounds.filter(x=>x.id!==r.id);
+   if(!writeStorage(STORAGE,updated))return;
+   rounds=updated;
    showRounds();
   };
   box.appendChild(el);
@@ -314,8 +364,10 @@ document.getElementById('exportBtn').onclick=()=>{
 
 document.getElementById('importFile').onchange=async e=>{
  try{
-  rounds=JSON.parse(await e.target.files[0].text());
-  localStorage.setItem(STORAGE,JSON.stringify(rounds));
+  const imported=JSON.parse(await e.target.files[0].text());
+  if(!Array.isArray(imported)||!imported.every(validRound))throw new Error('invalid backup');
+  if(!writeStorage(STORAGE,imported))return;
+  rounds=imported;
   showRounds();
  }catch(_){
   alert('Ungültige Backup-Datei');
@@ -335,6 +387,7 @@ if(navigator.geolocation){
 }
 restoreDraft();
 updateControls();
+setTimeout(showFirstUseHelp,0);
 </script>
 </body>
 </html>
