@@ -40,6 +40,8 @@ button:disabled{opacity:.45}
 .delete-round svg{width:22px;height:22px;display:block}
 .panel-actions{flex:0 0 auto;display:grid;gap:7px;padding-top:8px;border-top:1px solid #ddd}.panel-actions button{width:100%;padding:12px;background:#fff;color:#111;border-radius:12px;font-size:14px}
 .modal{position:fixed;z-index:3000;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.58);box-sizing:border-box}.modal.open{display:flex}.modal-card{width:min(100%,420px);max-height:calc(100vh - 40px);overflow:auto;background:#f4f4f4;border-radius:18px;padding:18px;box-sizing:border-box}.modal-card h2{margin:0 0 10px}.modal-card p{margin:8px 0;line-height:1.35}.modal-card ol{padding-left:22px;line-height:1.35}.modal-actions{display:grid;gap:8px;margin-top:16px}.modal-actions button,.modal-action{width:100%;background:#fff;color:#111}.modal-actions .primary{background:#007AFF;color:#fff}.modal-actions .cancel{background:#222;color:#fff}.modal-note{font-size:13px;color:#666;word-break:break-word}
+.welcome-card{overflow:hidden;text-align:center;padding:18px}.welcome-logo{width:78px;height:78px;border-radius:18px;display:block;margin:0 auto 8px}.welcome-card h1{font-size:25px;margin:0 0 6px}.welcome-card h3{font-size:16px;margin:10px 0 3px}.welcome-card p{font-size:15px;margin:4px 0;line-height:1.25}.welcome-card .privacy{font-weight:800;margin-top:10px}.welcome-card .modal-actions{margin-top:12px}
+@media(max-height:700px){.welcome-card{padding:13px}.welcome-logo{width:58px;height:58px;border-radius:14px;margin-bottom:5px}.welcome-card h1{font-size:22px;margin-bottom:4px}.welcome-card h3{font-size:15px;margin:7px 0 2px}.welcome-card p{font-size:13.5px;line-height:1.18;margin:3px 0}.welcome-card .privacy{margin-top:7px}.welcome-card .modal-actions{margin-top:9px}.welcome-card button{padding:13px}}
 .distance-label{background:#fff;border:0;border-radius:9px;padding:3px 6px;font-weight:800;box-shadow:0 1px 5px #555}
 .point-label{background:#fff;border:0;border-radius:7px;padding:2px 5px;font-size:12px;font-weight:800;box-shadow:0 1px 4px #555}
 .leaflet-top.leaflet-right{top:50%;right:12px;transform:translateY(-50%)}
@@ -80,18 +82,19 @@ button:disabled{opacity:.45}
 <div id="shareDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle"><div class="modal-card"><h2 id="shareTitle">Share App</h2><p>Share Golf Shot GPS with another golfer.</p><p class="modal-note">https://markus-bittner.github.io/golf-shot-gps/</p><p id="shareFeedback" class="modal-note" aria-live="polite"></p><div class="modal-actions"><button id="shareBtn" class="primary">SHARE</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
 <div id="coffeeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="coffeeTitle"><div class="modal-card"><h2 id="coffeeTitle">Buy Me a Coffee</h2><p>Golf Shot GPS is free to use. Optional support will help keep it simple and available.</p><div class="modal-actions"><button disabled>SUPPORT LINK NOT CONFIGURED</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
 <div id="helpDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card"><h2 id="helpTitle">Help</h2><ol><li>At the first tee, tap <b>START ROUND · TEE 1</b>.</li><li>Hit your shot and walk to the ball.</li><li>Tap <b>SHOT 1</b>, then repeat for each shot.</li><li>Tap <b>NEXT HOLE</b> when the hole is finished.</li><li>Tap <b>FINISH</b> after the round.</li></ol><p><b>Undo</b> removes the last position. The GPS button resumes position tracking. <b>MENU</b> opens completed rounds and utilities. <b>CLEAR</b> closes a saved-round view; the red trash icon permanently deletes it.</p><p class="modal-note">GPS accuracy depends on your phone and surroundings.</p><div class="modal-actions"><button class="cancel" data-close-dialog>CLOSE</button></div></div></div>
+<div id="welcomeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" data-required="true"><div class="modal-card welcome-card"><img class="welcome-logo" src="icon-512.png" alt="Golf Shot GPS logo"><h1 id="welcomeTitle">Golf Shot GPS</h1><p>A simple GPS shot tracker for measuring your real shot distances on the course.</p><h3>Intentionally simple</h3><p>Golf Shot GPS focuses on the essentials. No overloaded features — just quick and practical shot tracking while you play.</p><!-- Review the following privacy wording if anonymous analytics or installation-ID tracking is introduced. --><p class="privacy">No installation. No account. No subscription. No data collection.</p><p>Your rounds and GPS positions stay on your device.</p><h3>Like the app?</h3><p>Share it with your golfing friends or buy me a coffee — both are available in the MENU.</p><div class="modal-actions"><button id="getStartedBtn" class="primary">GET STARTED</button></div></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const STORAGE='golf-shot-gps-rounds-v1';
 const DRAFT_STORAGE='golf-shot-gps-active-round-v1';
-const HELP_STORAGE='golf-shot-gps-help-seen-v1';
+const WELCOME_STORAGE='golf-shot-gps-help-seen-v1';
 const POOR_ACCURACY_METERS=30;
 let rounds=readStorage(STORAGE,[]);
 rounds=Array.isArray(rounds)?rounds.filter(validRound):[];
 let round=null, viewedRound=null, hole=1, layers=[], capturePending=false;
 let currentPosition=null, currentMarker=null, accuracyCircle=null;
 let trackPositionMode=true;
-let firstUseShownThisSession=false;
+let gpsWatchStarted=false;
 const map=L.map('map',{zoomControl:false}).setView([47.37,8.2],16);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
  maxZoom:20, attribution:'Tiles © Esri'
@@ -129,13 +132,6 @@ function validPoint(p){
 function validRound(r){
  return !!r&&Array.isArray(r.holes)&&r.holes.every(h=>
   !!h&&Number.isFinite(Number(h.number))&&Array.isArray(h.points)&&h.points.every(validPoint));
-}
-
-function showFirstUseHelp(){
- if(firstUseShownThisSession||readStorage(HELP_STORAGE,false))return;
- firstUseShownThisSession=true;
- alert('START ROUND at the tee → walk to the ball → SHOT → repeat.');
- writeStorage(HELP_STORAGE,true);
 }
 
 function dist(a,b){
@@ -454,8 +450,8 @@ function openDialog(id){
  if(first)first.focus();
 }
 
-function closeDialog(dialog){
- if(dialog)dialog.classList.remove('open');
+function closeDialog(dialog,force=false){
+ if(dialog&&(!dialog.dataset.required||force))dialog.classList.remove('open');
 }
 
 document.querySelectorAll('[data-dialog]').forEach(button=>{
@@ -512,21 +508,40 @@ document.getElementById('shareBtn').onclick=async()=>{
  }
 };
 
-if(navigator.geolocation){
- navigator.geolocation.watchPosition(p=>{
-  const first=!currentPosition;
-  updateCurrentPosition(p);
-  if(first&&trackPositionMode)map.setZoom(18);
- },e=>{
-  if(!currentPosition&&!capturePending)info.textContent=gpsErrorMessage(e);
- }, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
-}else{
- info.textContent=gpsErrorMessage({code:0});
+function startGpsWatch(){
+ if(gpsWatchStarted)return;
+ gpsWatchStarted=true;
+ if(navigator.geolocation){
+  navigator.geolocation.watchPosition(p=>{
+   const first=!currentPosition;
+   updateCurrentPosition(p);
+   if(first&&trackPositionMode)map.setZoom(18);
+  },e=>{
+   if(!currentPosition&&!capturePending)info.textContent=gpsErrorMessage(e);
+  }, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+ }else{
+  info.textContent=gpsErrorMessage({code:0});
+ }
 }
+
+function initializeWelcome(){
+ if(readStorage(WELCOME_STORAGE,false)){
+  startGpsWatch();
+  return;
+ }
+ openDialog('welcomeDialog');
+}
+
+document.getElementById('getStartedBtn').onclick=()=>{
+ writeStorage(WELCOME_STORAGE,true);
+ closeDialog(document.getElementById('welcomeDialog'),true);
+ startGpsWatch();
+};
+
 restoreDraft();
 setTrackPositionMode(true);
 updateControls();
-setTimeout(showFirstUseHelp,0);
+setTimeout(initializeWelcome,0);
 </script>
 </body>
 </html>
