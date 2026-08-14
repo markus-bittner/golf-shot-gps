@@ -17,7 +17,8 @@ body.saved-view:after{content:"";position:fixed;z-index:1900;inset:0;border:3px 
 .top{position:fixed;z-index:1000;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
 .pill{pointer-events:auto;background:rgba(20,20,20,.82);color:white;border:0;border-radius:18px;padding:10px 14px;font-weight:700;backdrop-filter:blur(8px)}
 #info{max-width:70%}
-#locateBtn{position:fixed;z-index:1000;right:12px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 178px);width:52px;height:52px;border-radius:50%;padding:0;background:rgba(20,20,20,.86);color:#fff;font-size:25px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+#locateBtn{position:fixed;z-index:1000;right:12px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 178px);width:52px;height:52px;border-radius:50%;padding:0;background:rgba(20,20,20,.86);color:#fff;font-size:25px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);transition:background .15s,box-shadow .15s}
+#locateBtn.tracking{background:#007AFF;box-shadow:0 0 0 3px rgba(255,255,255,.85),0 2px 9px rgba(0,0,0,.4)}
 .bottom{position:fixed;z-index:1000;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:9px}
 button{font:inherit;border:0;border-radius:16px;padding:16px 10px;font-weight:800;font-size:16px}
 button,.top,.bottom,.panel,.panel *,.modal,.modal *{touch-action:manipulation}
@@ -56,10 +57,10 @@ button:disabled{opacity:.45}
   <div style="display:flex;gap:7px">
     <button id="clearView" class="pill">CLEAR</button>
     <button id="undo" class="pill" aria-label="Undo last recorded position" title="Undo last recorded position"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H5v-4M5.4 7.2A8 8 0 1 1 4 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <button id="history" class="pill">SAVED ROUNDS</button>
+    <button id="history" class="pill">MENU</button>
   </div>
 </div>
-<button id="locateBtn" aria-label="Show current position" title="Current position">◎</button>
+<button id="locateBtn" class="tracking" aria-label="Track current position: active" aria-pressed="true" title="Tracking current position">◎</button>
 <div class="bottom">
   <button id="shot">START ROUND · TEE 1</button>
   <button id="next">NEXT HOLE</button>
@@ -78,7 +79,7 @@ button:disabled{opacity:.45}
 <div id="exportDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><div class="modal-card"><h2 id="exportTitle">Export</h2><p>Saved rounds are stored locally on this device. Export a backup before changing devices or clearing browser data.</p><div class="modal-actions"><button id="exportBtn" class="primary">EXPORT BACKUP</button><button id="importBtn">IMPORT BACKUP</button><button class="cancel" data-close-dialog>CANCEL</button></div><input id="importFile" type="file" accept="application/json" hidden></div></div>
 <div id="shareDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle"><div class="modal-card"><h2 id="shareTitle">Share App</h2><p>Share Golf Shot GPS with another golfer.</p><p class="modal-note">https://markus-bittner.github.io/golf-shot-gps/</p><p id="shareFeedback" class="modal-note" aria-live="polite"></p><div class="modal-actions"><button id="shareBtn" class="primary">SHARE</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
 <div id="coffeeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="coffeeTitle"><div class="modal-card"><h2 id="coffeeTitle">Buy Me a Coffee</h2><p>Golf Shot GPS is free to use. Optional support will help keep it simple and available.</p><div class="modal-actions"><button disabled>SUPPORT LINK NOT CONFIGURED</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
-<div id="helpDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card"><h2 id="helpTitle">Help</h2><ol><li>At the first tee, tap <b>START ROUND · TEE 1</b>.</li><li>Hit your shot and walk to the ball.</li><li>Tap <b>SHOT 1</b>, then repeat for each shot.</li><li>Tap <b>NEXT HOLE</b> when the hole is finished.</li><li>Tap <b>FINISH</b> after the round.</li></ol><p><b>Undo</b> removes the last position. The GPS button recenters the map. <b>SAVED ROUNDS</b> opens completed rounds. <b>CLEAR</b> closes a saved-round view; the red trash icon permanently deletes it.</p><p class="modal-note">GPS accuracy depends on your phone and surroundings.</p><div class="modal-actions"><button class="cancel" data-close-dialog>CLOSE</button></div></div></div>
+<div id="helpDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card"><h2 id="helpTitle">Help</h2><ol><li>At the first tee, tap <b>START ROUND · TEE 1</b>.</li><li>Hit your shot and walk to the ball.</li><li>Tap <b>SHOT 1</b>, then repeat for each shot.</li><li>Tap <b>NEXT HOLE</b> when the hole is finished.</li><li>Tap <b>FINISH</b> after the round.</li></ol><p><b>Undo</b> removes the last position. The GPS button resumes position tracking. <b>MENU</b> opens completed rounds and utilities. <b>CLEAR</b> closes a saved-round view; the red trash icon permanently deletes it.</p><p class="modal-note">GPS accuracy depends on your phone and surroundings.</p><div class="modal-actions"><button class="cancel" data-close-dialog>CLOSE</button></div></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const STORAGE='golf-shot-gps-rounds-v1';
@@ -89,6 +90,7 @@ let rounds=readStorage(STORAGE,[]);
 rounds=Array.isArray(rounds)?rounds.filter(validRound):[];
 let round=null, viewedRound=null, hole=1, layers=[], capturePending=false;
 let currentPosition=null, currentMarker=null, accuracyCircle=null;
+let trackPositionMode=true;
 let firstUseShownThisSession=false;
 const map=L.map('map',{zoomControl:false}).setView([47.37,8.2],16);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
@@ -160,20 +162,31 @@ function updateCurrentPosition(pos){
   currentMarker.setLatLng(ll);
   accuracyCircle.setLatLng(ll).setRadius(currentPosition.accuracy);
  }
+ if(trackPositionMode)map.panTo(ll,{animate:false});
 }
 
 function centerOnCurrent(){
+ setTrackPositionMode(true);
  if(currentPosition){
-  map.setView([currentPosition.lat,currentPosition.lng],18);
+  map.panTo([currentPosition.lat,currentPosition.lng]);
   return;
  }
  info.textContent='GPS…';
  locate().then(p=>{
   currentPosition=p;
-  map.setView([p.lat,p.lng],18);
+  map.panTo([p.lat,p.lng]);
  }).catch(e=>{
   info.textContent=gpsErrorMessage(e);
  });
+}
+
+function setTrackPositionMode(active){
+ trackPositionMode=active;
+ const button=document.getElementById('locateBtn');
+ button.classList.toggle('tracking',active);
+ button.setAttribute('aria-pressed',String(active));
+ button.setAttribute('aria-label',active?'Track current position: active':'Track current position: inactive');
+ button.title=active?'Tracking current position':'Resume position tracking';
 }
 
 function marker(p,label){
@@ -182,7 +195,7 @@ function marker(p,label){
  if(label)m.bindTooltip(label,{permanent:true,direction:'top',className:'point-label'});
 }
 
-function redraw(){
+function redraw(fit=false){
  layers.forEach(x=>map.removeLayer(x));
  layers=[];
  const displayedRound=viewedRound||round;
@@ -199,7 +212,7 @@ function redraw(){
    layers.push(lab);
   }
  });
- if(all.length)map.fitBounds(all,{padding:[50,50],maxZoom:19});
+ if(fit&&all.length)map.fitBounds(all,{padding:[50,50],maxZoom:19});
 }
 
 function gpsErrorMessage(error){
@@ -280,7 +293,7 @@ async function addPoint(){
   if(prev)info.textContent=`Hole ${hole} · ${Math.round(dist(prev,p))} m · ${accuracyText(p)}`;
   else info.textContent=`Hole ${hole} · Tee saved · ${accuracyText(p)}`;
   updatePositionLabel();
-  map.setView([p.lat,p.lng],18);
+  if(trackPositionMode)map.panTo([p.lat,p.lng]);
   redraw();
  }catch(e){
   info.textContent=gpsErrorMessage(e);
@@ -365,9 +378,10 @@ function showRounds(){
     return;
    }
    viewedRound=r;
+   setTrackPositionMode(false);
    document.getElementById('panel').style.display='none';
    info.textContent=d;
-   redraw();
+   redraw(true);
    updateControls();
   };
   el.querySelector('.delete-round').onclick=()=>{
@@ -404,6 +418,33 @@ document.getElementById('closePanel').onclick=()=>{
  clearSavedView();
 };
 document.getElementById('clearView').onclick=clearSavedView;
+
+map.on('dragstart',()=>setTrackPositionMode(false));
+
+function preventUiDoubleTapZoom(){
+ const uiSelector='.top,.bottom,.panel,.modal,#locateBtn';
+ let lastTapEnd=0;
+ let lastTapTarget=null;
+ const preventSecondTap=event=>{
+  if(!(event.target instanceof Element)||!event.target.closest(uiSelector))return;
+  const now=Date.now();
+  if(event.target===lastTapTarget&&now-lastTapEnd<350)event.preventDefault();
+  lastTapEnd=now;
+  lastTapTarget=event.target;
+ };
+ document.addEventListener('dblclick',event=>{
+  if(event.target instanceof Element&&event.target.closest(uiSelector))event.preventDefault();
+ },{passive:false});
+ if('PointerEvent'in window){
+  document.addEventListener('pointerup',event=>{
+   if(event.pointerType==='touch')preventSecondTap(event);
+  },{passive:false});
+ }else{
+  document.addEventListener('touchend',preventSecondTap,{passive:false});
+ }
+}
+
+preventUiDoubleTapZoom();
 
 function openDialog(id){
  const dialog=document.getElementById(id);
@@ -475,7 +516,7 @@ if(navigator.geolocation){
  navigator.geolocation.watchPosition(p=>{
   const first=!currentPosition;
   updateCurrentPosition(p);
-  if(first)map.setView([p.coords.latitude,p.coords.longitude],18);
+  if(first&&trackPositionMode)map.setZoom(18);
  },e=>{
   if(!currentPosition&&!capturePending)info.textContent=gpsErrorMessage(e);
  }, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
@@ -483,6 +524,7 @@ if(navigator.geolocation){
  info.textContent=gpsErrorMessage({code:0});
 }
 restoreDraft();
+setTrackPositionMode(true);
 updateControls();
 setTimeout(showFirstUseHelp,0);
 </script>
