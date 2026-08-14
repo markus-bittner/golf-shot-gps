@@ -75,6 +75,10 @@ Measurements depend on the GPS accuracy of the user's device. Accuracy can vary 
 
 Golf Shot GPS is designed for modern browsers, including Safari on iPhone and iPad, Chrome on Android, Samsung Internet, and modern desktop Chrome, Edge, and Safari where applicable. Its primary use case is a GPS-capable smartphone on the golf course.
 
+### Map provider configuration
+
+The default base map is Esri. Developers can change the single `MAP_PROVIDER` constant in `index.html` to `esri`, `mapbox`, or `osm`. Mapbox uses its Leaflet-compatible Static Tiles API path and requires a public, production-URL-restricted token in `MAPBOX_CONFIG`; it is not enabled for production. The OSM public tile service is a development/fallback option whose usage policy must be respected and may require replacement for significant public traffic. Esri licensing and complete attribution requirements remain under external review. Mapbox's separate Mapbox GL JS map-load pricing model would require a future rendering-engine migration and is not used by this Leaflet implementation.
+
 ## Share Golf Shot GPS
 
 If Golf Shot GPS is useful to you, please [share it with your golfing friends](https://enginity-ch.github.io/golf-shot-gps/).

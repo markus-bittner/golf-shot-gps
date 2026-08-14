@@ -43,6 +43,29 @@ Esri's current developer documentation states that applications using ArcGIS ser
 - [Esri data attribution guidance](https://developers.arcgis.com/documentation/glossary/data-attribution/)
 - [Esri legal terms](https://www.esri.com/en-us/legal/terms/master-agreement)
 
+### OpenStreetMap standard tiles
+
+- Endpoint referenced as the development/fallback provider: `https://tile.openstreetmap.org/{z}/{x}/{y}.png`
+- Map data: © OpenStreetMap contributors, available under the Open Database License (ODbL)
+- Attribution: The active OSM layer displays and links `© OpenStreetMap contributors` on the map.
+- Tile service: The OpenStreetMap Foundation public tile servers are community-funded, best-effort infrastructure with no SLA. Their usage policy requires the official URL, visible attribution, normal HTTP caching, and prohibits bulk downloading, prefetching, and offline use. This fallback may need to be replaced with a suitable hosted or self-managed OSM-derived service before significant public traffic.
+
+- [OpenStreetMap copyright and license](https://www.openstreetmap.org/copyright)
+- [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/)
+
+### Mapbox Static Tiles API
+
+- Endpoint pattern referenced by the optional provider: `https://api.mapbox.com/styles/v1/{username}/{style_id}/tiles/512/{z}/{x}/{y}`
+- Integration: Leaflet-compatible raster tiles from a Mapbox Studio style
+- Status: Not enabled by default and no access token is committed
+- Credentials: Requires a public browser token with only the necessary scopes; it should be restricted to the production URL where supported.
+- Attribution and terms: Mapbox-hosted maps remain subject to Mapbox service terms, pricing, logo, and attribution requirements. Satellite use also requires applicable imagery-provider attribution. Production activation requires a final attribution review, including the required Mapbox logo.
+- Pricing distinction: Leaflet requests to the Static Tiles API are billed per API request. Mapbox GL JS map-load pricing is a different model and would require a future rendering-engine migration.
+
+- [Mapbox Static Tiles API](https://docs.mapbox.com/api/maps/static-tiles/)
+- [Mapbox token management](https://docs.mapbox.com/accounts/guides/tokens/)
+- [Mapbox attribution guidance](https://docs.mapbox.com/help/dive-deeper/attribution/)
+
 ## Other Resources Reviewed
 
 - The app uses operating-system font stacks only; no third-party web fonts are loaded or distributed.

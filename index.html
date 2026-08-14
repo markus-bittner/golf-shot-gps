@@ -89,16 +89,85 @@ const STORAGE='golf-shot-gps-rounds-v1';
 const DRAFT_STORAGE='golf-shot-gps-active-round-v1';
 const WELCOME_STORAGE='golf-shot-gps-help-seen-v1';
 const POOR_ACCURACY_METERS=30;
+const MAP_PROVIDER='esri';
+const MAPBOX_CONFIG={
+ accessToken:'', // Public browser token only. Restrict it to the production URL before use.
+ username:'mapbox',
+ styleId:'satellite-v9'
+};
 let rounds=readStorage(STORAGE,[]);
 rounds=Array.isArray(rounds)?rounds.filter(validRound):[];
 let round=null, viewedRound=null, hole=1, layers=[], capturePending=false;
 let currentPosition=null, currentMarker=null, accuracyCircle=null;
 let trackPositionMode=true;
 let gpsWatchStarted=false;
+let baseLayer=null, activeMapProvider=null;
 const map=L.map('map',{zoomControl:false}).setView([47.37,8.2],16);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
- maxZoom:20, attribution:'Tiles © Esri'
-}).addTo(map);
+
+function createBaseLayer(provider){
+ if(provider==='esri'){
+  return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+   maxZoom:20,
+   attribution:'Tiles © Esri'
+  });
+ }
+ if(provider==='osm'){
+  // Development/fallback service only. Review the OSM tile usage policy before high-volume public use.
+  return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+   maxZoom:19,
+   attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+  });
+ }
+ if(provider==='mapbox'){
+  if(!MAPBOX_CONFIG.accessToken)throw new Error('Mapbox access token is not configured');
+  const styleUrl=`https://api.mapbox.com/styles/v1/${MAPBOX_CONFIG.username}/${MAPBOX_CONFIG.styleId}/tiles/512/{z}/{x}/{y}?access_token=${encodeURIComponent(MAPBOX_CONFIG.accessToken)}`;
+  return L.tileLayer(styleUrl,{
+   tileSize:512,
+   zoomOffset:-1,
+   maxZoom:22,
+   attribution:'&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.maxar.com/">Maxar</a>'
+  });
+ }
+ throw new Error(`Unknown map provider: ${provider}`);
+}
+
+function setMapProvider(provider){
+ let layer;
+ try{
+  layer=createBaseLayer(provider);
+ }catch(error){
+  if(provider==='osm'){
+   console.error('Map provider "osm" unavailable; no fallback base map is available.',error);
+   return false;
+  }
+  console.warn(`Map provider "${provider}" unavailable; falling back to OSM.`,error);
+  return setMapProvider('osm');
+ }
+
+ let failureHandled=false;
+ layer.on('tileerror',error=>{
+  if(failureHandled||baseLayer!==layer)return;
+  failureHandled=true;
+  if(provider==='osm'){
+   console.error('Map provider "osm" failed to load; no fallback base map is available.',error);
+   return;
+  }
+  console.warn(`Map provider "${provider}" failed to load; falling back to OSM.`,error);
+  setMapProvider('osm');
+ });
+
+ layer.addTo(map);
+ if(baseLayer)map.removeLayer(baseLayer);
+ baseLayer=layer;
+ activeMapProvider=provider;
+ return true;
+}
+
+function initBaseMap(provider=MAP_PROVIDER){
+ return setMapProvider(provider);
+}
+
+initBaseMap();
 L.control.zoom({position:'topright'}).addTo(map);
 const info=document.getElementById('info'), shot=document.getElementById('shot');
 
