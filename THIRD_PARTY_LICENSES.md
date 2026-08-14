@@ -32,14 +32,18 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ### Esri ArcGIS World Imagery
 
-- Service: Esri ArcGIS World Imagery tiled map service
-- Endpoint used by the application: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`
-- Current in-map attribution: `Tiles © Esri`
+- Services: authenticated Esri ArcGIS World Imagery and ArcGIS Location Platform Static Basemap Tiles imagery labels
+- Imagery endpoint: `https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`
+- Labels endpoint: `https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/imagery/labels/static/tile/{z}/{y}/{x}`
+- Authentication: a public browser API key in `ESRI_API_KEY`, restricted to the canonical Enginity GitHub Pages URL and granted only the **Static basemap tiles** privilege
+- In-map attribution: `Powered by Esri | Sources: Esri, Maxar, Earthstar Geographics, TomTom, Garmin, FAO, NOAA, USGS, OpenStreetMap contributors, and the GIS User Community`
 - Provider: Esri and the imagery/data providers represented in the service
 - Terms: Esri imagery, services, and contributing-provider content remain subject to Esri's applicable terms and data-attribution requirements. They are not covered by the Golf Shot GPS proprietary license.
 
-Esri's current developer documentation states that applications using ArcGIS services or content must display Esri and data-provider attribution, and that an ArcGIS Location Platform or ArcGIS Online account is required for current basemap services. Because Golf Shot GPS uses a legacy public `server.arcgisonline.com` endpoint without an application credential and shows only `Tiles © Esri`, the current public-use authorization, account requirements, usage limits, and complete attribution for this exact deployment must be confirmed with Esri before publication under the Enginity organization. The existing attribution acknowledges Esri but may not provide all contributing data-provider credits required for the imagery shown at a particular location.
+The API key is intentionally visible in the browser-delivered source. It is not a Client ID or Client Secret. The key expires on 2027-08-13, service usage is monitored externally in the ArcGIS account, and pay-as-you-go is disabled. The application adds no billing, analytics, caching, offline-download, or premium-service implementation. If either authenticated Esri layer fails, the application falls back to OpenStreetMap without changing round or map-overlay state.
 
+- [ArcGIS Static Basemap Tiles service](https://developers.arcgis.com/rest/static-basemap-tiles/)
+- [Esri example: display multiple basemap layers](https://developers.arcgis.com/openlayers/maps/raster-tile-basemaps/display-multiple-basemap-layers/)
 - [Esri data attribution guidance](https://developers.arcgis.com/documentation/glossary/data-attribution/)
 - [Esri legal terms](https://www.esri.com/en-us/legal/terms/master-agreement)
 

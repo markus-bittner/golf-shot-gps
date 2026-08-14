@@ -90,6 +90,7 @@ const DRAFT_STORAGE='golf-shot-gps-active-round-v1';
 const WELCOME_STORAGE='golf-shot-gps-help-seen-v1';
 const POOR_ACCURACY_METERS=30;
 const MAP_PROVIDER='esri';
+const ESRI_API_KEY='AAPTa6mhnlZMmFmVkOq_GtJGqDg..4cImdLGB8XEDZ4SXpq_0bUWbvC6px4XRzlMtL2Ra_jtMCM-U9E_C0E7yXr94Invif2Y6mTu-7QxoyTk-dazrny0-WqYQkx9KwMJBAvEEUi0DowGyKNvYdV8jxrq1LQXKN3ok31ys9U9byqGAC6RXNuZ7FXyIUDIo_r_k9Lstl9ZLrWE6ZO9CZPPA6hxoxwh4KuDigpfUDHBCgmsyleY9IA5jFlEG_r1EKAQQ9Sj6GjckQVmgGVg0FDRyKFXtPg..AT1_g0EXEFwo'; // Public browser key restricted to the canonical Enginity GitHub Pages URL.
 const MAPBOX_CONFIG={
  accessToken:'', // Public browser token only. Restrict it to the production URL before use.
  username:'mapbox',
@@ -106,10 +107,20 @@ const map=L.map('map',{zoomControl:false}).setView([47.37,8.2],16);
 
 function createBaseLayer(provider){
  if(provider==='esri'){
-  return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
+  if(!ESRI_API_KEY)throw new Error('Esri API key is not configured');
+  const token=encodeURIComponent(ESRI_API_KEY);
+  const attribution='Powered by <a href="https://www.esri.com/en-us/home">Esri</a> | Sources: Esri, Maxar, Earthstar Geographics, TomTom, Garmin, FAO, NOAA, USGS, <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, and the GIS User Community';
+  const imagery=L.tileLayer(`https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=${token}`,{
    maxZoom:20,
-   attribution:'Tiles © Esri'
+   attribution
   });
+  const labels=L.tileLayer(`https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/imagery/labels/static/tile/{z}/{y}/{x}?token=${token}`,{
+   tileSize:512,
+   zoomOffset:-1,
+   maxZoom:20,
+   attribution:''
+  });
+  return L.layerGroup([imagery,labels]);
  }
  if(provider==='osm'){
   // Development/fallback service only. Review the OSM tile usage policy before high-volume public use.
@@ -131,6 +142,16 @@ function createBaseLayer(provider){
  throw new Error(`Unknown map provider: ${provider}`);
 }
 
+function onBaseLayerTileError(layer,handler){
+ if(typeof layer.eachLayer==='function'){
+  layer.eachLayer(child=>{
+   if(typeof child.on==='function')child.on('tileerror',handler);
+  });
+  return;
+ }
+ layer.on('tileerror',handler);
+}
+
 function setMapProvider(provider){
  let layer;
  try{
@@ -145,7 +166,7 @@ function setMapProvider(provider){
  }
 
  let failureHandled=false;
- layer.on('tileerror',error=>{
+ onBaseLayerTileError(layer,error=>{
   if(failureHandled||baseLayer!==layer)return;
   failureHandled=true;
   if(provider==='osm'){
