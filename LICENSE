@@ -1,0 +1,33 @@
+Golf Shot GPS Proprietary License Notice
+
+Copyright © 2026 Enginity. All rights reserved.
+
+1. Scope
+
+This license applies only to the source code, documentation, and original assets in Golf Shot GPS that are owned by Enginity (the "Enginity Materials"). Third-party software, libraries, services, map content, imagery, data, and other third-party materials are not licensed under this license and remain subject to their respective licenses and terms.
+
+2. Hosted Application Usage
+
+Enginity permits users to access and use the officially hosted Golf Shot GPS application free of charge for its intended purpose. This permission concerns use of the hosted application only and does not grant rights in the Enginity Materials.
+
+3. Source Code
+
+The source code may be publicly accessible for viewing purposes. Unless Enginity explicitly authorizes otherwise in writing, no permission is granted to copy, reproduce, modify, adapt, distribute, republish, sublicense, sell, commercially exploit, or create derivative works from any Enginity Materials.
+
+No rights are granted by implication, estoppel, or otherwise. All rights not expressly granted are reserved by Enginity.
+
+4. Third-Party Materials
+
+This proprietary license does not apply to third-party materials. Nothing in this license restricts rights granted directly by a third party under its own license, nor does it attempt to relicense third-party materials as Enginity Materials. Applicable notices are documented in THIRD_PARTY_LICENSES.md.
+
+5. Disclaimer of Warranty
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE ENGINITY MATERIALS, SOFTWARE, HOSTED APPLICATION, AND SERVICE ARE PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING, WITHOUT LIMITATION, WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, RELIABILITY, AVAILABILITY, TITLE, AND NON-INFRINGEMENT.
+
+GPS positions and shot-distance measurements may be inaccurate and depend on the user's device, satellite reception, and environmental conditions. Golf Shot GPS must not be relied upon for safety-critical purposes, surveying, navigation, or any other application requiring precise positioning.
+
+6. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, ENGINITY AND ITS OFFICERS, EMPLOYEES, CONTRACTORS, AND CONTRIBUTORS SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, PUNITIVE, OR CONSEQUENTIAL DAMAGES, OR FOR ANY LOSS OF DATA, LOSS OF USE, LOSS OF PROFITS, BUSINESS INTERRUPTION, OR OTHER COMMERCIAL OR PERSONAL LOSS, ARISING FROM OR RELATING TO GOLF SHOT GPS, THE ENGINITY MATERIALS, THE HOSTED APPLICATION, THE SERVICE, OR GPS DATA AND MEASUREMENTS, REGARDLESS OF THE THEORY OF LIABILITY AND EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+Some jurisdictions do not allow certain exclusions or limitations of warranties or liability. In those jurisdictions, these provisions apply only to the maximum extent permitted by applicable law.
