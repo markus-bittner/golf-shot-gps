@@ -120,7 +120,10 @@ function createBaseLayer(provider){
    maxZoom:20,
    attribution:''
   });
-  return L.layerGroup([imagery,labels]);
+  const group=L.layerGroup([imagery,labels]);
+  group.esriImageryLayer=imagery;
+  group.esriLabelsLayer=labels;
+  return group;
  }
  if(provider==='osm'){
   // Development/fallback service only. Review the OSM tile usage policy before high-volume public use.
@@ -152,6 +155,17 @@ function onBaseLayerTileError(layer,handler){
  layer.on('tileerror',handler);
 }
 
+function describeTileError(layerName,error){
+ const tile=error&&error.tile;
+ const rawUrl=(tile&&(tile.currentSrc||tile.src))||(error&&error.target&&error.target._url)||'unknown';
+ return {
+  layer:layerName,
+  request:String(rawUrl).replace(/([?&]token=)[^&]+/,'$1[redacted]'),
+  status:(error&&error.status)||(error&&error.target&&error.target.status)||'unavailable in browser tileerror event',
+  type:(error&&error.type)||'tileerror'
+ };
+}
+
 function setMapProvider(provider){
  let layer;
  try{
@@ -166,16 +180,30 @@ function setMapProvider(provider){
  }
 
  let failureHandled=false;
- onBaseLayerTileError(layer,error=>{
+ const handleBaseMapFailure=error=>{
   if(failureHandled||baseLayer!==layer)return;
   failureHandled=true;
   if(provider==='osm'){
-   console.error('Map provider "osm" failed to load; no fallback base map is available.',error);
+   console.error('Map provider "osm" failed to load; no fallback base map is available.',describeTileError('OpenStreetMap basemap',error));
    return;
   }
-  console.warn(`Map provider "${provider}" failed to load; falling back to OSM.`,error);
+  const layerName=provider==='esri'?'Esri World Imagery basemap':`${provider} basemap`;
+  console.warn(`Map provider "${provider}" failed to load; falling back to OSM.`,describeTileError(layerName,error));
   setMapProvider('osm');
- });
+ };
+
+ if(provider==='esri'&&layer.esriImageryLayer&&layer.esriLabelsLayer){
+  layer.esriImageryLayer.on('tileerror',handleBaseMapFailure);
+  let labelsDisabled=false;
+  layer.esriLabelsLayer.on('tileerror',error=>{
+   if(labelsDisabled||baseLayer!==layer)return;
+   labelsDisabled=true;
+   console.warn('Optional Esri imagery-label overlay failed; keeping World Imagery active and disabling labels.',describeTileError('Esri imagery-label overlay',error));
+   layer.removeLayer(layer.esriLabelsLayer);
+  });
+ }else{
+  onBaseLayerTileError(layer,handleBaseMapFailure);
+ }
 
  layer.addTo(map);
  if(baseLayer)map.removeLayer(baseLayer);
