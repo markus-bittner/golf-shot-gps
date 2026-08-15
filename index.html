@@ -14,9 +14,9 @@
 html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111}
 #map{position:fixed;inset:0}
 body.saved-view:after{content:"";position:fixed;z-index:1900;inset:0;border:3px solid #FFD60A;box-shadow:inset 0 0 12px rgba(255,214,10,.7);pointer-events:none;box-sizing:border-box}
-.top{position:fixed;z-index:1000;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.top{position:fixed;z-index:1000;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:start;gap:6px;pointer-events:none}
 .pill{pointer-events:auto;background:rgba(20,20,20,.82);color:white;border:0;border-radius:18px;padding:10px 14px;font-weight:700;backdrop-filter:blur(8px)}
-#info{max-width:70%}
+#info{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #locateBtn{position:fixed;z-index:1000;right:12px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 178px);width:52px;height:52px;border-radius:50%;padding:0;background:rgba(20,20,20,.86);color:#fff;font-size:25px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);transition:background .15s,box-shadow .15s}
 #locateBtn.tracking{background:#007AFF;box-shadow:0 0 0 3px rgba(255,255,255,.85),0 2px 9px rgba(0,0,0,.4)}
 .bottom{position:fixed;z-index:1000;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -39,31 +39,30 @@ button:disabled{opacity:.45}
 .delete-round{width:44px!important;height:44px;flex:0 0 auto!important;padding:10px!important;border-radius:12px!important;color:#FF3B30!important;background:#fff1f0!important;text-align:center!important;display:flex;align-items:center;justify-content:center}
 .delete-round svg{width:22px;height:22px;display:block}
 .panel-actions{flex:0 0 auto;display:grid;gap:7px;padding-top:8px;border-top:1px solid #ddd}.panel-actions button{width:100%;padding:12px;background:#fff;color:#111;border-radius:12px;font-size:14px}.panel-actions .share-action{background:#007AFF;color:#fff}.panel-actions .coffee-action{background:#E9AD32;color:#211600}
+.segmented{display:flex;align-items:center;padding:3px;background:rgba(20,20,20,.82);border-radius:15px;pointer-events:auto;backdrop-filter:blur(8px)}.segmented button{min-width:34px;padding:7px 8px;border-radius:11px;background:transparent;color:#fff;font-size:12px}.segmented button.active{background:#fff;color:#111}.map-switch{align-self:start}.menu-unit{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:0 0 auto;padding:8px 2px}.menu-unit>span{font-size:13px;font-weight:700;color:#555}.menu-unit .segmented{background:#ddd;backdrop-filter:none}.menu-unit .segmented button{color:#444}.menu-unit .segmented button.active{background:#007AFF;color:#fff}
 .modal{position:fixed;z-index:3000;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.58);box-sizing:border-box}.modal.open{display:flex}.modal-card{width:min(100%,420px);max-height:calc(100vh - 40px);overflow:auto;background:#f4f4f4;border-radius:18px;padding:18px;box-sizing:border-box}.modal-card h2{margin:0 0 10px}.modal-card p{margin:8px 0;line-height:1.35}.modal-card ol{padding-left:22px;line-height:1.35}.modal-actions{display:grid;gap:8px;margin-top:16px}.modal-actions button,.modal-action{width:100%;background:#fff;color:#111}.modal-action{display:block;box-sizing:border-box;border-radius:16px;padding:16px 10px;text-align:center;text-decoration:none;font-weight:800;font-size:16px}.modal-actions .primary{background:#007AFF;color:#fff}.modal-actions .cancel{background:#222;color:#fff}.modal-note{font-size:13px;color:#666;word-break:break-word}
 .welcome-card{overflow:hidden;text-align:center;padding:18px}.welcome-page{display:none}.welcome-page.active{display:block}.welcome-logo{width:78px;height:78px;border-radius:18px;display:block;margin:0 auto 8px}.welcome-card h1{font-size:25px;margin:0 0 6px}.welcome-card h2{font-size:21px;margin:0 0 7px}.welcome-card h3{font-size:16px;margin:10px 0 3px}.welcome-card p{font-size:15px;margin:4px 0;line-height:1.25}.welcome-card .privacy{font-weight:800;margin-top:10px}.welcome-card .modal-actions{margin-top:12px}.welcome-steps{text-align:left}.welcome-step{margin:6px 0}.welcome-step-title,.welcome-action{display:block;font-size:14px}.welcome-step p{font-size:14px;margin:0;line-height:1.18}.welcome-action{font-weight:800;margin:0 0 1px}.platforms{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;margin:8px 0 10px}.platforms p{font-size:13px}.welcome-nav{display:grid;grid-template-columns:auto 1fr;gap:8px;margin-top:10px}.welcome-nav .back{background:transparent;color:#555;padding:12px 14px}.welcome-nav .primary{background:#007AFF;color:#fff}
 .help-card{overflow-x:hidden;text-align:left}.help-heading{position:sticky;z-index:1;top:-18px;display:flex;align-items:center;justify-content:space-between;margin:-18px -18px 12px;padding:14px 18px 8px;background:#f4f4f4}.help-card .help-heading h2{margin:0}.help-close{min-width:44px;min-height:44px;padding:8px 12px;background:#222;color:#fff}.help-card h3{font-size:16px;margin:14px 0 4px}.help-card p,.help-card li{font-size:14px;line-height:1.35}.help-card ul{margin:5px 0;padding-left:20px}.help-card a{color:#0066CC;overflow-wrap:anywhere}.help-card .modal-actions{margin-top:18px}
 @media(max-height:700px){.welcome-card{padding:12px}.welcome-logo{width:56px;height:56px;border-radius:14px;margin-bottom:4px}.welcome-card h1{font-size:21px;margin-bottom:3px}.welcome-card h2{font-size:19px;margin-bottom:4px}.welcome-card h3{font-size:14px;margin:6px 0 1px}.welcome-card p{font-size:13px;line-height:1.15;margin:2px 0}.welcome-card .privacy{margin-top:6px}.welcome-card .modal-actions{margin-top:8px}.welcome-card button{padding:12px}.platforms{gap:6px;margin:4px 0 5px}.platforms p,.welcome-step p{font-size:12.5px}.welcome-step{margin:3px 0}.welcome-step-title,.welcome-action{font-size:13px}.welcome-nav{margin-top:5px}}
-.distance-label{background:#fff;border:0;border-radius:9px;padding:3px 6px;font-weight:800;box-shadow:0 1px 5px #555}
+.distance-label{background:#fff;border:0;border-radius:9px;padding:3px 6px;font-weight:800;white-space:nowrap;box-shadow:0 1px 5px #555}.live-distance-label{background:#FFF4DE;border:1px solid #FF9500;color:#5A3300;font-size:13px}
 .point-label{background:#fff;border:0;border-radius:7px;padding:2px 5px;font-size:12px;font-weight:800;box-shadow:0 1px 4px #555}
 .leaflet-top.leaflet-right{top:50%;right:12px;transform:translateY(-50%)}
-.current-crosshair{width:28px;height:28px;border:3px solid #007AFF;border-radius:50%;box-sizing:border-box;position:relative;box-shadow:0 0 0 2px rgba(0,0,0,.45)}
-.current-crosshair:before,.current-crosshair:after{content:"";position:absolute;background:#007AFF;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
-.current-crosshair:before{width:3px;height:38px;left:10px;top:-8px}
-.current-crosshair:after{height:3px;width:38px;top:10px;left:-8px}
-.current-crosshair i{position:absolute;width:6px;height:6px;border-radius:50%;background:#111;left:8px;top:8px;z-index:2}
+.crosshair-symbol{width:28px;height:28px;border:1.5px solid currentColor;border-radius:50%;box-sizing:border-box;position:relative;color:#007AFF;filter:drop-shadow(0 0 1px #000) drop-shadow(0 1px 1px rgba(0,0,0,.75))}.crosshair-arm{position:absolute;background:currentColor}.crosshair-arm.up{width:6px;height:15px;left:9.5px;top:-7px;clip-path:polygon(0 0,100% 0,50% 100%)}.crosshair-arm.down{width:6px;height:15px;left:9.5px;top:17px;clip-path:polygon(50% 0,100% 100%,0 100%)}.crosshair-arm.left{width:15px;height:6px;left:-7px;top:9.5px;clip-path:polygon(0 0,100% 50%,0 100%)}.crosshair-arm.right{width:15px;height:6px;left:17px;top:9.5px;clip-path:polygon(0 50%,100% 0,100% 100%)}.free-map-mode .current-crosshair{color:#fff}.button-crosshair{color:#fff;transform:scale(.76)}
+.tee-marker{filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}.tee-marker svg{display:block;overflow:visible}
+.toast{position:fixed;z-index:3500;left:50%;top:max(72px,calc(env(safe-area-inset-top) + 58px));transform:translateX(-50%);display:none;padding:10px 16px;border-radius:14px;background:rgba(20,20,20,.9);color:#fff;font-weight:800;box-shadow:0 2px 10px rgba(0,0,0,.4);pointer-events:none}.toast.show{display:block}
+@media(max-width:370px){.top{left:8px;right:8px;gap:4px}.pill{padding-left:9px;padding-right:9px}#history{font-size:14px}.segmented button{min-width:31px;padding-left:6px;padding-right:6px}}
 </style>
 </head>
 <body>
 <div id="map"></div>
 <div class="top">
   <div id="info" class="pill">Hole 1 · Ready</div>
-  <div style="display:flex;gap:7px">
-    <button id="clearView" class="pill">CLEAR</button>
-    <button id="undo" class="pill" aria-label="Undo last recorded position" title="Undo last recorded position"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H5v-4M5.4 7.2A8 8 0 1 1 4 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <button id="history" class="pill">MENU</button>
-  </div>
+  <div id="mapSwitch" class="segmented map-switch" role="group" aria-label="Map type"><button data-map-provider="esri">SAT</button><button data-map-provider="osm">MAP</button></div>
+  <button id="clearView" class="pill">CLEAR</button>
+  <button id="undo" class="pill" aria-label="Undo last recorded position" title="Undo last recorded position"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H5v-4M5.4 7.2A8 8 0 1 1 4 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <button id="history" class="pill">MENU</button>
 </div>
-<button id="locateBtn" class="tracking" aria-label="Track current position: active" aria-pressed="true" title="Tracking current position">◎</button>
+<button id="locateBtn" class="tracking" aria-label="Track current position: active" aria-pressed="true" title="Tracking current position"><span class="crosshair-symbol button-crosshair" aria-hidden="true"><span class="crosshair-arm up"></span><span class="crosshair-arm right"></span><span class="crosshair-arm down"></span><span class="crosshair-arm left"></span></span></button>
 <div class="bottom">
   <button id="shot">START ROUND · TEE 1</button>
   <button id="next">NEXT HOLE</button>
@@ -72,6 +71,7 @@ button:disabled{opacity:.45}
 <div id="panel" class="panel">
   <div class="panel-header"><h2>Saved Rounds</h2><button id="closePanel" class="close" aria-label="Close saved rounds">✕</button></div>
   <div id="rounds"></div>
+  <div class="menu-unit"><span>Distance unit</span><div id="unitSwitch" class="segmented" role="group" aria-label="Distance unit"><button data-unit="m">m</button><button data-unit="yd">yd</button></div></div>
   <div class="panel-actions">
     <button data-dialog="exportDialog">EXPORT ROUNDS</button>
     <button class="share-action" data-dialog="shareDialog">SHARE APP</button>
@@ -82,13 +82,17 @@ button:disabled{opacity:.45}
 <div id="exportDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><div class="modal-card"><h2 id="exportTitle">Export Rounds</h2><p>Saved rounds are stored locally on this device. Export a backup before changing devices or clearing browser data.</p><div class="modal-actions"><button id="exportBtn" class="primary">EXPORT BACKUP</button><button id="importBtn">IMPORT BACKUP</button><button class="cancel" data-close-dialog>CANCEL</button></div><input id="importFile" type="file" accept="application/json" hidden></div></div>
 <div id="shareDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle"><div class="modal-card"><h2 id="shareTitle">Share App</h2><p>Share Golf Shot GPS with another golfer.</p><p class="modal-note">https://enginity-ch.github.io/golf-shot-gps/</p><p id="shareFeedback" class="modal-note" aria-live="polite"></p><div class="modal-actions"><button id="shareBtn" class="primary">SHARE</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
 <div id="coffeeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="coffeeTitle"><div class="modal-card"><h2 id="coffeeTitle">Buy Me a Coffee</h2><p>Golf Shot GPS is free to use. Optional support will help keep it simple and available.</p><div class="modal-actions"><a class="modal-action primary" href="https://buymeacoffee.com/golf.shot.gps" target="_blank" rel="noopener noreferrer">SUPPORT GOLF SHOT GPS</a><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
+<div id="finishDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="finishTitle"><div class="modal-card"><h2 id="finishTitle">Finish round?</h2><div class="modal-actions"><button data-close-dialog>NO</button><button id="confirmFinishBtn" class="primary">YES</button></div></div></div>
 <div id="helpDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card help-card"><div class="help-heading"><h2 id="helpTitle">Help / About</h2><button class="help-close" data-close-dialog aria-label="Close Help / About">✕</button></div><h3>Golf Shot GPS</h3><p>A simple GPS shot tracker for golfers who want to measure their real shot distances on the course.</p><h3>Intentionally Simple</h3><p>Golf Shot GPS focuses on the essentials. No overloaded features — just quick and practical shot tracking while you play.</p><h3>How to Use</h3><ul><li>At the first tee, tap <b>START ROUND · TEE 1</b>. Hit your shot, walk to the ball, and tap <b>SHOT 1</b>. Continue with <b>SHOT n</b>.</li><li>Use <b>NEXT HOLE</b> after a hole and <b>FINISH</b> after the round.</li><li><b>UNDO</b> removes the last recorded position. The position button switches between Track Position Mode and Free Mode.</li><li><b>MENU</b> opens Saved Rounds and utilities. <b>CLEAR</b> closes a saved-round view; the red trash icon permanently deletes a saved round.</li></ul><h3>Add to Home Screen</h3><p><b>iPhone / iPad</b><br>Safari → Share → Add to Home Screen</p><p><b>Android</b><br>Browser menu → Add to Home screen</p><h3>Privacy</h3><p>No account, no subscription, and no personal data collection. Rounds and GPS positions stay on your device. No analytics or installation tracking is currently implemented.</p><h3>GPS Accuracy</h3><p>GPS positions and shot distances depend on the device and environmental conditions. They are practical golf estimates, not survey-grade measurements.</p><h3>Share / Support</h3><p>Share Golf Shot GPS through <b>SHARE APP</b>. You can optionally support development through <b>BUY ME A COFFEE</b>; support is never required.</p><h3>License / Third-party Information</h3><p>README, license, and third-party information are available in the <a href="https://github.com/enginity-ch/golf-shot-gps" target="_blank" rel="noopener noreferrer">public Enginity repository</a>.</p><div class="modal-actions"><button id="showWelcomeBtn">SHOW WELCOME</button><button class="cancel" data-close-dialog>CLOSE</button></div></div></div>
 <div id="welcomeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" data-required="true"><div class="modal-card welcome-card"><section class="welcome-page active" data-welcome-page="1"><img class="welcome-logo" src="icon-512.png" alt="Golf Shot GPS logo"><h1 id="welcomeTitle">Golf Shot GPS</h1><p>A simple GPS shot tracker for measuring your real shot distances on the course.</p><h3>Intentionally simple</h3><p>Golf Shot GPS focuses on the essentials. No overloaded features — just quick and practical shot tracking while you play.</p><!-- Review the following privacy wording if anonymous analytics or installation-ID tracking is introduced. --><p class="privacy">No installation. No account. No subscription. No data collection.</p><p>Your rounds and GPS positions stay on your device.</p><h3>Like the app?</h3><p>Share it with your golfing friends or buy me a coffee — both are available in the MENU.</p><div class="modal-actions"><button id="welcomeNextBtn" class="primary">NEXT</button></div></section><section class="welcome-page" data-welcome-page="2"><h2>Add to Home Screen</h2><p>For quick access on the course, add Golf Shot GPS to your Home Screen. It will then open just like an app.</p><div class="platforms"><div><b>iPhone / iPad</b><p>Safari → Share → Add to Home Screen</p></div><div><b>Android</b><p>Browser menu → Add to Home screen</p></div></div><h2>How to use</h2><div class="welcome-steps"><div class="welcome-step"><b class="welcome-step-title">1. At the tee</b><p>Tap</p><span class="welcome-action">START ROUND · TEE 1</span><p>Then hit your shot</p></div><div class="welcome-step"><b class="welcome-step-title">2. At your ball</b><p>Tap</p><span class="welcome-action">SHOT 1</span><p>The ball position and shot distance are recorded and displayed</p><p>Hit your next shot and repeat</p></div><div class="welcome-step"><b class="welcome-step-title">3. Next hole</b><p>Tap</p><span class="welcome-action">NEXT HOLE</span><p>Record the next tee position</p></div><div class="welcome-step"><b class="welcome-step-title">4. Finish</b><p>Tap</p><span class="welcome-action">FINISH</span><p>Your round is saved automatically</p></div></div><div class="welcome-nav"><button id="welcomeBackBtn" class="back">BACK</button><button id="getStartedBtn" class="primary">GET STARTED</button></div></section></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite">Round saved</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const STORAGE='golf-shot-gps-rounds-v1';
 const DRAFT_STORAGE='golf-shot-gps-active-round-v1';
 const WELCOME_STORAGE='golf-shot-gps-help-seen-v1';
+const UNIT_STORAGE='golf-shot-gps-distance-unit-v1';
+const MAP_STORAGE='golf-shot-gps-map-provider-v1';
 const POOR_ACCURACY_METERS=30;
 const MAP_PROVIDER='esri';
 const ESRI_API_KEY='AAPTaTbUuv4t03eRyKNoqLOYfyw..WLCp1j1jl0Ukp1Qp9mVsgS_NMMSXDiOHGD3-GpU1AeJ9IiFLFVCHJO7rX5bpKcvERgolykVh5HxSqur03ildQ1Nm25D8-gnct8blg18rgAOE_21Mk5WckzxF6iDoW6nnH4AHvabZKuF7x3jark2OTSNYRSgLt6jlFSnvy_4vn1SNhYuskc_b6iB1HcZP2fupBGZZczg2PSyEjEy50csOUg00B_DvD1ka2fW7dSsTCO3bM9EYpmH8TL9kY2MPTA..AT1_g0EXEFwo'; // Public browser key restricted to the approved GitHub Pages origins.
@@ -99,7 +103,9 @@ const MAPBOX_CONFIG={
 };
 let rounds=readStorage(STORAGE,[]);
 rounds=Array.isArray(rounds)?rounds.filter(validRound):[];
-let round=null, viewedRound=null, hole=1, layers=[], capturePending=false;
+let distanceUnit=readStorage(UNIT_STORAGE,'m')==='yd'?'yd':'m';
+let preferredMapProvider=readStorage(MAP_STORAGE,'esri')==='osm'?'osm':'esri';
+let round=null, viewedRound=null, hole=1, layers=[], liveLayers=[], capturePending=false;
 let currentPosition=null, currentMarker=null, accuracyCircle=null;
 let trackPositionMode=true;
 let gpsWatchStarted=false;
@@ -217,6 +223,7 @@ function setMapProvider(provider){
  if(baseLayer)map.removeLayer(baseLayer);
  baseLayer=layer;
  activeMapProvider=provider;
+ updateMapControl();
  return true;
 }
 
@@ -224,7 +231,7 @@ function initBaseMap(provider=MAP_PROVIDER){
  return setMapProvider(provider);
 }
 
-initBaseMap();
+initBaseMap(preferredMapProvider);
 L.control.zoom({position:'topright'}).addTo(map);
 const info=document.getElementById('info'), shot=document.getElementById('shot');
 
@@ -251,6 +258,50 @@ function removeStorage(key){
  try{localStorage.removeItem(key)}catch(_){}
 }
 
+function updateUnitControl(){
+ document.querySelectorAll('#unitSwitch [data-unit]').forEach(button=>{
+  const active=button.dataset.unit===distanceUnit;
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-pressed',String(active));
+ });
+}
+
+function updateMapControl(){
+ document.querySelectorAll('#mapSwitch [data-map-provider]').forEach(button=>{
+  const active=button.dataset.mapProvider===activeMapProvider;
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-pressed',String(active));
+ });
+}
+
+function refreshDistanceDisplay(){
+ redraw();
+ if(viewedRound)return;
+ const h=currentHole();
+ if(!round||!h||!h.points.length)return;
+ const latest=h.points[h.points.length-1];
+ if(h.points.length>1){
+  const previous=h.points[h.points.length-2];
+  info.textContent=`Hole ${hole} · ${formatDistance(dist(previous,latest))} · ${accuracyText(latest)}`;
+ }else{
+  info.textContent=`Hole ${hole} · Tee saved · ${accuracyText(latest)}`;
+ }
+}
+
+function selectDistanceUnit(unit){
+ distanceUnit=unit==='yd'?'yd':'m';
+ writeStorage(UNIT_STORAGE,distanceUnit);
+ updateUnitControl();
+ refreshDistanceDisplay();
+}
+
+function selectMapProvider(provider){
+ if(provider!=='esri'&&provider!=='osm')return;
+ preferredMapProvider=provider;
+ writeStorage(MAP_STORAGE,preferredMapProvider);
+ setMapProvider(provider);
+}
+
 function validPoint(p){
  return !!p&&Number.isFinite(p.lat)&&Number.isFinite(p.lng);
 }
@@ -266,6 +317,15 @@ function dist(a,b){
  return 2*R*Math.asin(Math.sqrt(x));
 }
 
+function formatDistance(meters){
+ const value=distanceUnit==='yd'?meters*1.0936133:meters;
+ return `${Math.round(value)} ${distanceUnit}`;
+}
+
+function crosshairHtml(className=''){
+ return `<div class="crosshair-symbol ${className}"><span class="crosshair-arm up"></span><span class="crosshair-arm right"></span><span class="crosshair-arm down"></span><span class="crosshair-arm left"></span></div>`;
+}
+
 function locate(){
  if(!navigator.geolocation)return Promise.reject({code:0});
  return new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(
@@ -273,11 +333,11 @@ function locate(){
   rej,{enableHighAccuracy:true,timeout:15000,maximumAge:0}));
 }
 
-function updateCurrentPosition(pos){
- currentPosition={lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy,time:Date.now()};
+function displayCurrentPosition(position){
+ currentPosition=position;
  const ll=[currentPosition.lat,currentPosition.lng];
  if(!currentMarker){
-  const icon=L.divIcon({className:'',html:'<div class="current-crosshair"><i></i></div>',iconSize:[28,28],iconAnchor:[14,14]});
+  const icon=L.divIcon({className:'',html:crosshairHtml('current-crosshair'),iconSize:[28,28],iconAnchor:[14,14]});
   currentMarker=L.marker(ll,{icon,interactive:false,zIndexOffset:1000}).addTo(map);
   accuracyCircle=L.circle(ll,{radius:currentPosition.accuracy,color:'#007AFF',weight:1,opacity:.8,fillColor:'#007AFF',fillOpacity:.10,interactive:false}).addTo(map);
  }else{
@@ -285,6 +345,11 @@ function updateCurrentPosition(pos){
   accuracyCircle.setLatLng(ll).setRadius(currentPosition.accuracy);
  }
  if(trackPositionMode)map.panTo(ll,{animate:false});
+ redrawLiveDistance();
+}
+
+function updateCurrentPosition(pos){
+ displayCurrentPosition({lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy,time:Date.now()});
 }
 
 function centerOnCurrent(){
@@ -304,6 +369,7 @@ function centerOnCurrent(){
 
 function setTrackPositionMode(active){
  trackPositionMode=active;
+ document.body.classList.toggle('free-map-mode',!active);
  const button=document.getElementById('locateBtn');
  button.classList.toggle('tracking',active);
  button.setAttribute('aria-pressed',String(active));
@@ -312,9 +378,27 @@ function setTrackPositionMode(active){
 }
 
 function marker(p,label){
- const m=L.circleMarker([p.lat,p.lng],{radius:7,weight:3,color:'#fff',fillColor:'#111',fillOpacity:1}).addTo(map);
+ const svg='<div class="tee-marker"><svg width="24" height="30" viewBox="0 0 24 30" aria-hidden="true"><circle cx="12" cy="8" r="7" fill="#fff" stroke="#171717" stroke-width="1.4"/><circle cx="9" cy="6" r=".8" fill="#bbb"/><circle cx="13" cy="4.5" r=".7" fill="#bbb"/><circle cx="15.5" cy="8" r=".8" fill="#bbb"/><circle cx="11" cy="10" r=".65" fill="#bbb"/><path d="M6 15h12l-4.5 3.5L12 29l-1.5-10.5z" fill="#fff" stroke="#171717" stroke-width="1.4" stroke-linejoin="round"/></svg></div>';
+ const icon=L.divIcon({className:'',html:svg,iconSize:[24,30],iconAnchor:[12,30],tooltipAnchor:[0,-27]});
+ const m=L.marker([p.lat,p.lng],{icon,interactive:false}).addTo(map);
  layers.push(m);
  if(label)m.bindTooltip(label,{permanent:true,direction:'top',className:'point-label'});
+}
+
+function clearLiveDistance(){
+ liveLayers.forEach(layer=>map.removeLayer(layer));
+ liveLayers=[];
+}
+
+function redrawLiveDistance(){
+ clearLiveDistance();
+ const h=currentHole();
+ if(viewedRound||!round||!currentPosition||!h||!h.points.length)return;
+ const origin=h.points[h.points.length-1];
+ const line=L.polyline([[origin.lat,origin.lng],[currentPosition.lat,currentPosition.lng]],{weight:3,color:'#FF9500',opacity:.9,dashArray:'7 7',interactive:false}).addTo(map);
+ const mid=[(origin.lat+currentPosition.lat)/2,(origin.lng+currentPosition.lng)/2];
+ const label=L.marker(mid,{interactive:false,icon:L.divIcon({className:'distance-label live-distance-label',html:formatDistance(dist(origin,currentPosition)),iconSize:null})}).addTo(map);
+ liveLayers.push(line,label);
 }
 
 function redraw(fit=false){
@@ -326,14 +410,15 @@ function redraw(fit=false){
  displayedRound.holes.forEach(h=>{
   h.points.forEach((p,i)=>{all.push([p.lat,p.lng]);marker(p,i===0?'T'+h.number:'S'+i);});
   for(let i=1;i<h.points.length;i++){
-   const a=h.points[i-1],b=h.points[i],d=Math.round(dist(a,b));
+   const a=h.points[i-1],b=h.points[i],d=formatDistance(dist(a,b));
    const line=L.polyline([[a.lat,a.lng],[b.lat,b.lng]],{weight:4,color:'#007AFF'}).addTo(map);
    layers.push(line);
    const mid=[(a.lat+b.lat)/2,(a.lng+b.lng)/2];
-   const lab=L.marker(mid,{icon:L.divIcon({className:'distance-label',html:d+' m',iconSize:null})}).addTo(map);
+   const lab=L.marker(mid,{icon:L.divIcon({className:'distance-label',html:d,iconSize:null})}).addTo(map);
    layers.push(lab);
   }
  });
+ redrawLiveDistance();
  if(fit&&all.length)map.fitBounds(all,{padding:[50,50],maxZoom:19});
 }
 
@@ -346,8 +431,8 @@ function gpsErrorMessage(error){
 }
 
 function accuracyText(p){
- const accuracy=Math.round(p.accuracy);
- return p.accuracy>POOR_ACCURACY_METERS?`Low GPS accuracy · ±${accuracy} m`:`±${accuracy} m`;
+ const accuracy=formatDistance(p.accuracy);
+ return p.accuracy>POOR_ACCURACY_METERS?`Low GPS accuracy · ±${accuracy}`:`±${accuracy}`;
 }
 
 function currentHole(){
@@ -412,10 +497,12 @@ async function addPoint(){
   const prev=h.points[h.points.length-1];
   h.points.push(p);
   saveDraft();
-  if(prev)info.textContent=`Hole ${hole} · ${Math.round(dist(prev,p))} m · ${accuracyText(p)}`;
+  if(prev)info.textContent=`Hole ${hole} · ${formatDistance(dist(prev,p))} · ${accuracyText(p)}`;
   else info.textContent=`Hole ${hole} · Tee saved · ${accuracyText(p)}`;
   updatePositionLabel();
-  if(trackPositionMode)map.panTo([p.lat,p.lng]);
+  setTrackPositionMode(true);
+  displayCurrentPosition(p);
+  map.panTo([p.lat,p.lng],{animate:false});
   redraw();
  }catch(e){
   info.textContent=gpsErrorMessage(e);
@@ -437,10 +524,21 @@ document.getElementById('next').onclick=()=>{
  saveDraft();
  updatePositionLabel();
  info.textContent=`Hole ${hole} · Ready`;
+ redrawLiveDistance();
  updateControls();
 };
 
-document.getElementById('finish').onclick=()=>{
+let toastTimer=null;
+
+function showToast(message){
+ const toast=document.getElementById('toast');
+ toast.textContent=message;
+ toast.classList.add('show');
+ clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>toast.classList.remove('show'),3000);
+}
+
+function finishRound(){
  if(capturePending||viewedRound||!round||!round.holes.some(x=>x.points.length))return;
  round.finished=true;
  round.finishedAt=new Date().toISOString();
@@ -454,15 +552,26 @@ document.getElementById('finish').onclick=()=>{
   return;
  }
  clearDraft();
- alert('Round saved.');
  round=null;
  viewedRound=null;
  hole=1;
  layers.forEach(x=>map.removeLayer(x));
  layers=[];
+ clearLiveDistance();
  updatePositionLabel();
  info.textContent='Hole 1 · Ready';
  updateControls();
+ showToast('Round saved');
+}
+
+document.getElementById('finish').onclick=()=>{
+ if(capturePending||viewedRound||!round||!round.holes.some(x=>x.points.length))return;
+ openDialog('finishDialog');
+};
+
+document.getElementById('confirmFinishBtn').onclick=()=>{
+ closeDialog(document.getElementById('finishDialog'));
+ finishRound();
 };
 
 document.getElementById('undo').onclick=()=>{
@@ -596,6 +705,12 @@ function showWelcomeFlow(){
 document.querySelectorAll('[data-dialog]').forEach(button=>{
  button.onclick=()=>openDialog(button.dataset.dialog);
 });
+document.querySelectorAll('#unitSwitch [data-unit]').forEach(button=>{
+ button.onclick=()=>selectDistanceUnit(button.dataset.unit);
+});
+document.querySelectorAll('#mapSwitch [data-map-provider]').forEach(button=>{
+ button.onclick=()=>selectMapProvider(button.dataset.mapProvider);
+});
 document.querySelectorAll('[data-close-dialog]').forEach(button=>{
  button.onclick=()=>closeDialog(button.closest('.modal'));
 });
@@ -686,6 +801,8 @@ document.getElementById('getStartedBtn').onclick=()=>{
 
 restoreDraft();
 setTrackPositionMode(true);
+updateUnitControl();
+updateMapControl();
 updateControls();
 setTimeout(initializeWelcome,0);
 </script>
