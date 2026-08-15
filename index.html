@@ -166,6 +166,10 @@ function describeTileError(layerName,error){
  };
 }
 
+function tileErrorLog(details){
+ return `layer=${details.layer}; request=${details.request}; status=${details.status}; type=${details.type}`;
+}
+
 function setMapProvider(provider){
  let layer;
  try{
@@ -184,11 +188,13 @@ function setMapProvider(provider){
   if(failureHandled||baseLayer!==layer)return;
   failureHandled=true;
   if(provider==='osm'){
-   console.error('Map provider "osm" failed to load; no fallback base map is available.',describeTileError('OpenStreetMap basemap',error));
+   const details=describeTileError('OpenStreetMap basemap',error);
+   console.error(`Map provider "osm" failed to load; no fallback base map is available. ${tileErrorLog(details)}`);
    return;
   }
   const layerName=provider==='esri'?'Esri World Imagery basemap':`${provider} basemap`;
-  console.warn(`Map provider "${provider}" failed to load; falling back to OSM.`,describeTileError(layerName,error));
+  const details=describeTileError(layerName,error);
+  console.warn(`Map provider "${provider}" failed to load; falling back to OSM. ${tileErrorLog(details)}`);
   setMapProvider('osm');
  };
 
@@ -198,7 +204,8 @@ function setMapProvider(provider){
   layer.esriLabelsLayer.on('tileerror',error=>{
    if(labelsDisabled||baseLayer!==layer)return;
    labelsDisabled=true;
-   console.warn('Optional Esri imagery-label overlay failed; keeping World Imagery active and disabling labels.',describeTileError('Esri imagery-label overlay',error));
+   const details=describeTileError('Esri imagery-label overlay',error);
+   console.warn(`Optional Esri imagery-label overlay failed; keeping World Imagery active and disabling labels. ${tileErrorLog(details)}`);
    layer.removeLayer(layer.esriLabelsLayer);
   });
  }else{
