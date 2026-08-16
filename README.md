@@ -81,7 +81,7 @@ The default base map is Esri. Developers can change the single `MAP_PROVIDER` co
 
 ## Share Golf Shot GPS
 
-If Golf Shot GPS is useful to you, please [share it with your golfing friends](https://enginity-ch.github.io/golf-shot-gps/).
+If Golf Shot GPS is useful to you, please share the public entry link with your golfing friends: [enginity.ch/golf-shot-gps](https://enginity.ch/golf-shot-gps/).
 
 ## Support
 
