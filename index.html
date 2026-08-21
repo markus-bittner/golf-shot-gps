@@ -6,7 +6,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Golf Shot GPS</title>
-<link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <meta name="theme-color" content="#007AFF">
@@ -138,11 +137,6 @@ syncViewportHeight();
 const map=L.map('map',{zoomControl:false,rotate:true,bearing:0,dragRotate:false,touchRotate:false,shiftKeyRotate:false,rotateControl:false}).setView([47.37,8.2],16);
 map.attributionControl.setPrefix(false);
 
-function requestPortraitOrientation(){
- if(screen.orientation&&typeof screen.orientation.lock==='function')screen.orientation.lock('portrait').catch(()=>{});
-}
-
-requestPortraitOrientation();
 function refreshMapSize(){
  syncViewportHeight();
  requestAnimationFrame(()=>map.invalidateSize({animate:false}));
@@ -159,7 +153,6 @@ document.addEventListener('visibilitychange',()=>{
  if(!document.hidden)refreshMapSize();
 });
 window.addEventListener('orientationchange',()=>{
- requestPortraitOrientation();
  refreshMapSize();
  setTimeout(refreshMapSize,150);
  setTimeout(refreshMapSize,500);
