@@ -90,7 +90,7 @@ button:disabled{opacity:.45}
 </div>
 <div id="exportDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><div class="modal-card"><h2 id="exportTitle">Export Rounds</h2><p>Saved rounds are stored locally on this device. Export a backup before changing devices or clearing browser data.</p><div class="modal-actions"><button id="exportBtn" class="primary">EXPORT BACKUP</button><button id="importBtn">IMPORT BACKUP</button><button class="cancel" data-close-dialog>CANCEL</button></div><input id="importFile" type="file" accept="application/json" hidden></div></div>
 <div id="shareDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle"><div class="modal-card"><h2 id="shareTitle">Share App</h2><p>Share Golf Shot GPS with another golfer.</p><p id="shareUrl" class="modal-note"></p><p id="shareFeedback" class="modal-note" aria-live="polite"></p><div class="modal-actions"><button id="shareBtn" class="primary">SHARE</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
-<div id="coffeeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="coffeeTitle"><div class="modal-card"><h2 id="coffeeTitle">Support Golf Shot GPS</h2><p>Golf Shot GPS is free to use and has no ads or subscriptions.</p><p>If you find it useful, please consider making a donation. Your support helps cover map and service costs and supports further development of the app.</p><div class="modal-actions"><a class="modal-action primary" href="https://buymeacoffee.com/golf.shot.gps" target="_blank" rel="noopener noreferrer">DONATE VIA BUY ME A COFFEE</a><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
+<div id="coffeeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="coffeeTitle"><div class="modal-card"><h2 id="coffeeTitle">Support Golf Shot GPS</h2><p>Golf Shot GPS is free to use and has no ads or subscriptions.</p><p>If you find it useful, please consider making a donation. Your support helps cover map and service costs and supports further development of the app.</p><div class="modal-actions"><a id="donateLink" class="modal-action primary" href="https://buymeacoffee.com/golf.shot.gps" target="_blank" rel="noopener noreferrer">DONATE VIA BUY ME A COFFEE</a><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
 <div id="finishDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="finishTitle"><div class="modal-card"><h2 id="finishTitle">Finish round?</h2><div class="modal-actions"><button data-close-dialog>NO</button><button id="confirmFinishBtn" class="primary">YES</button><button id="withdrawRoundBtn" class="danger">WITHDRAW ROUND</button></div></div></div>
 <div id="withdrawDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="withdrawTitle"><div class="modal-card"><h2 id="withdrawTitle">Withdraw round?</h2><p>This round will not be saved.</p><div class="modal-actions"><button data-close-dialog>CANCEL</button><button id="confirmWithdrawBtn" class="danger">WITHDRAW</button></div></div></div>
 <div id="helpDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="modal-card help-card"><div class="help-heading"><h2 id="helpTitle">Help / About / Feedback</h2><button class="help-close" data-close-dialog aria-label="Close Help / About / Feedback">✕</button></div><h3>Golf Shot GPS</h3><p>A simple GPS shot tracker for golfers who want to measure their real shot distances on the course.</p><h3>Intentionally Simple</h3><p>Golf Shot GPS focuses on the essentials. No overloaded features — just quick and practical shot tracking while you play.</p><h3>How to Use</h3><ul><li>At the first tee, tap <b>START ROUND · TEE 1</b>. Hit your shot, walk to the ball, and tap <b>SHOT 1</b>. Continue with <b>SHOT n</b>.</li><li>Use <b>NEXT HOLE</b> after a hole and <b>FINISH</b> after the round.</li><li><b>UNDO</b> removes the last recorded position. The position button switches between Track Position Mode and Free Mode.</li><li><b>MENU</b> opens Saved Rounds and utilities. <b>CLEAR</b> closes a saved-round view; the red trash icon permanently deletes a saved round.</li></ul><h3>Add to Home Screen</h3><p><b>iPhone / iPad</b><br>Safari → Share → Add to Home Screen</p><p><b>Android</b><br>Browser menu → Add to Home screen</p><h3>Privacy</h3><p>No account, no subscription, and no personal data collection. Rounds and GPS positions stay on your device. No analytics or installation tracking is implemented.</p><h3>GPS Accuracy</h3><p>GPS positions and shot distances depend on the device and environmental conditions. They are practical golf estimates, not survey-grade measurements.</p><h3>Share Golf Shot GPS</h3><p>If you find Golf Shot GPS useful, please share it with your golfing friends using the <b>SHARE APP</b> button in the MENU.</p><button class="help-action share-action" data-dialog="shareDialog">SHARE APP</button><h3>Support Golf Shot GPS</h3><p>Golf Shot GPS is free to use and has no ads or subscriptions.</p><p>Please support its continued development and help cover map and service costs using the <b>DONATE</b> button in the MENU.</p><button class="help-action coffee-action" data-dialog="coffeeDialog">DONATE</button><h3>Feedback</h3><p>Have a suggestion, found a bug, or have an idea for Golf Shot GPS?</p><a class="modal-action feedback-action" href="mailto:golf-shot-gps@enginity.ch?subject=Golf%20Shot%20GPS%20Feedback">SEND FEEDBACK</a><h3>License / Third-party Information</h3><p>README, license, and third-party information are available in the <a href="https://github.com/enginity-ch/golf-shot-gps" target="_blank" rel="noopener noreferrer">public Enginity repository</a>.</p><p class="app-version" data-app-version></p><div class="modal-actions"><button id="showWelcomeBtn">SHOW WELCOME</button><button class="cancel" data-close-dialog>CLOSE</button></div></div></div>
@@ -839,6 +839,11 @@ function closeDialog(dialog,force=false){
  if(dialog&&(!dialog.dataset.required||force))dialog.classList.remove('open');
 }
 
+function returnToMenu(dialog){
+ closeDialog(dialog);
+ showRounds();
+}
+
 function showWelcomePage(page){
  document.querySelectorAll('#welcomeDialog .welcome-page').forEach(section=>{
   section.classList.toggle('active',section.dataset.welcomePage===String(page));
@@ -881,6 +886,7 @@ document.getElementById('exportBtn').onclick=()=>{
  a.download='golf-shot-gps-backup.json';
  a.click();
  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ returnToMenu(document.getElementById('exportDialog'));
 };
 
 document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
@@ -909,10 +915,13 @@ document.getElementById('shareBtn').onclick=async()=>{
    await navigator.clipboard.writeText(PUBLIC_SHARE_URL);
    feedback.textContent='App link copied.';
   }
+  returnToMenu(document.getElementById('shareDialog'));
  }catch(e){
   if(e.name!=='AbortError')feedback.textContent='Could not share. Copy the app link above.';
  }
 };
+
+document.getElementById('donateLink').onclick=()=>returnToMenu(document.getElementById('coffeeDialog'));
 
 function startGpsWatch(){
  if(gpsWatchStarted)return;
