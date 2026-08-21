@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Golf Shot GPS</title>
@@ -12,14 +12,17 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111}
+body{--attribution-space:34px}
 #map{position:fixed;inset:0}
 body.saved-view:after{content:"";position:fixed;z-index:1900;inset:0;border:3px solid #FFD60A;box-shadow:inset 0 0 12px rgba(255,214,10,.7);pointer-events:none;box-sizing:border-box}
 .top{position:fixed;z-index:1000;top:max(12px,env(safe-area-inset-top));left:12px;right:12px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;gap:6px;pointer-events:none}
 .pill{pointer-events:auto;background:rgba(20,20,20,.82);color:white;border:0;border-radius:18px;padding:10px 14px;font-weight:700;backdrop-filter:blur(8px)}
 #info{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#locateBtn{position:fixed;z-index:1000;right:12px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 178px);width:52px;height:52px;border-radius:50%;padding:0;background:rgba(20,20,20,.86);color:#fff;font-size:25px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);transition:background .15s,box-shadow .15s}
+#locateBtn{position:fixed;z-index:1000;right:12px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + 178px + var(--attribution-space));width:52px;height:52px;border-radius:50%;padding:0;background:rgba(20,20,20,.86);color:#fff;font-size:25px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);transition:background .15s,box-shadow .15s}
 #locateBtn.tracking{background:#007AFF;box-shadow:0 0 0 3px rgba(255,255,255,.85),0 2px 9px rgba(0,0,0,.4)}
-.bottom{position:fixed;z-index:1000;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#orientationBtn{position:fixed;z-index:1000;right:12px;top:calc(max(12px,env(safe-area-inset-top)) + 54px);width:52px;height:52px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;background:#fff;color:#007AFF;border:2px solid #007AFF;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+#orientationBtn.waiting{color:#111;border-color:#777}.orientation-icon{width:32px;height:36px;display:block}.orientation-icon.heading{width:27px;height:31px}
+.bottom{position:fixed;z-index:1000;left:12px;right:12px;bottom:calc(max(12px,env(safe-area-inset-bottom)) + var(--attribution-space));display:grid;grid-template-columns:1fr 1fr;gap:9px}
 button{font:inherit;border:0;border-radius:16px;padding:16px 10px;font-weight:800;font-size:16px}
 button,.top,.bottom,.panel,.panel *,.modal,.modal *{touch-action:manipulation}
 button:disabled{opacity:.45}
@@ -48,12 +51,16 @@ button:disabled{opacity:.45}
 .point-label{background:#fff;border:0;border-radius:7px;padding:2px 5px;font-size:12px;font-weight:800;box-shadow:0 1px 4px #555}
 .leaflet-top.leaflet-right{top:50%;right:12px;transform:translateY(-50%)}
 .crosshair-symbol{width:28px;height:28px;border:1.5px solid currentColor;border-radius:50%;box-sizing:border-box;position:relative;color:#007AFF;filter:drop-shadow(0 0 1px #000) drop-shadow(0 1px 1px rgba(0,0,0,.75))}.crosshair-arm{position:absolute;background:currentColor}.crosshair-arm.up{width:6px;height:15px;left:9.5px;top:-7px;clip-path:polygon(0 0,100% 0,50% 100%)}.crosshair-arm.down{width:6px;height:15px;left:9.5px;top:17px;clip-path:polygon(50% 0,100% 100%,0 100%)}.crosshair-arm.left{width:15px;height:6px;left:-7px;top:9.5px;clip-path:polygon(0 0,100% 50%,0 100%)}.crosshair-arm.right{width:15px;height:6px;left:17px;top:9.5px;clip-path:polygon(0 50%,100% 0,100% 100%)}.free-map-mode .current-crosshair{color:#fff}.button-crosshair{color:#fff;transform:scale(.76)}
-.tee-marker{filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}.tee-marker svg{display:block;overflow:visible}
+.tee-marker,.shot-marker{filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}.tee-marker svg,.shot-marker svg{display:block;overflow:visible}
+.leaflet-bottom.leaflet-right{z-index:1400;left:8px;right:8px;bottom:max(2px,env(safe-area-inset-bottom));pointer-events:none}.leaflet-control-attribution{float:none!important;margin:0!important;max-width:100%;box-sizing:border-box;padding:2px 4px!important;font-size:8px!important;line-height:1.15!important;text-align:left;white-space:normal;background:rgba(255,255,255,.82)!important;pointer-events:auto}
+.portrait-guard{display:none;position:fixed;z-index:5000;inset:0;align-items:center;justify-content:center;padding:24px;background:#111;color:#fff;text-align:center;font-weight:800;font-size:18px;box-sizing:border-box}
+@media(orientation:landscape) and (max-height:500px){.portrait-guard{display:flex}}
 .toast{position:fixed;z-index:3500;left:50%;top:max(72px,calc(env(safe-area-inset-top) + 58px));transform:translateX(-50%);display:none;padding:10px 16px;border-radius:14px;background:rgba(20,20,20,.9);color:#34C759;font-weight:800;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.4);pointer-events:none}.toast.show{display:block}
 @media(max-width:370px){.top{left:8px;right:8px;gap:4px}.pill{padding-left:9px;padding-right:9px}#history{font-size:14px}.segmented button{min-width:31px;padding-left:6px;padding-right:6px}}
 </style>
 </head>
 <body>
+<div class="portrait-guard" role="status">Rotate your phone to portrait to continue.</div>
 <div id="map"></div>
 <div class="top">
   <div id="info" class="pill">Hole 1 · Ready</div>
@@ -61,6 +68,7 @@ button:disabled{opacity:.45}
   <button id="undo" class="pill" aria-label="Undo last recorded position" title="Undo last recorded position"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H5v-4M5.4 7.2A8 8 0 1 1 4 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <button id="history" class="pill">MENU</button>
 </div>
+<button id="orientationBtn" aria-label="North Up: map oriented north" aria-pressed="true" title="North Up – orient map to north"><svg class="orientation-icon north" viewBox="0 0 32 36" aria-hidden="true"><path d="M16 2v16M9 9l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><text x="16" y="34" text-anchor="middle" fill="currentColor" font-size="17" font-weight="800">N</text></svg></button>
 <button id="locateBtn" class="tracking" aria-label="Track current position: active" aria-pressed="true" title="Tracking current position"><span class="crosshair-symbol button-crosshair" aria-hidden="true"><span class="crosshair-arm up"></span><span class="crosshair-arm right"></span><span class="crosshair-arm down"></span><span class="crosshair-arm left"></span></span></button>
 <div class="bottom">
   <button id="shot">START ROUND · TEE 1</button>
@@ -91,13 +99,14 @@ button:disabled{opacity:.45}
 <div id="welcomeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" data-required="true"><div class="modal-card welcome-card"><section class="welcome-page active" data-welcome-page="1"><img class="welcome-logo" src="icon-512.png" alt="Golf Shot GPS logo"><h1 id="welcomeTitle">Golf Shot GPS</h1><p>A simple GPS shot tracker for measuring your real shot distances on the course.</p><h3>Intentionally simple</h3><p>Golf Shot GPS focuses on the essentials. No overloaded features — just quick and practical shot tracking while you play.</p><!-- Review the following privacy wording if anonymous analytics or installation-ID tracking is introduced. --><p class="privacy">No installation. No account. No subscription. No data collection.</p><p>Your rounds and GPS positions stay on your device.</p><h3>Like the app?</h3><p>Share it with your golfing friends or buy me a coffee — both are available in the MENU.</p><div class="modal-actions"><button id="welcomeNextBtn" class="primary">NEXT</button></div></section><section class="welcome-page" data-welcome-page="2"><h2>Add to Home Screen</h2><p>For quick access on the course, add Golf Shot GPS to your Home Screen. It will then open just like an app.</p><div class="platforms"><div><b>iPhone / iPad</b><p>Safari → Share → Add to Home Screen</p></div><div><b>Android</b><p>Browser menu → Add to Home screen</p></div></div><h2>How to use</h2><div class="welcome-steps"><div class="welcome-step"><b class="welcome-step-title">1. At the tee</b><p>Tap</p><span class="welcome-action">START ROUND · TEE 1</span><p>Then hit your shot</p></div><div class="welcome-step"><b class="welcome-step-title">2. At your ball</b><p>Tap</p><span class="welcome-action">SHOT 1</span><p>The ball position and shot distance are recorded and displayed</p><p>Hit your next shot and repeat</p></div><div class="welcome-step"><b class="welcome-step-title">3. Next hole</b><p>Tap</p><span class="welcome-action">NEXT HOLE</span><p>Record the next tee position</p></div><div class="welcome-step"><b class="welcome-step-title">4. Finish</b><p>Tap</p><span class="welcome-action">FINISH</span><p>Your round is saved automatically</p></div></div><div class="welcome-nav"><button id="welcomeBackBtn" class="back">BACK</button><button id="getStartedBtn" class="primary">GET STARTED</button></div></section></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite">Round saved</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.2.3/dist/leaflet-rotate.umd.min.js"></script>
 <script>
 const STORAGE='golf-shot-gps-rounds-v1';
 const DRAFT_STORAGE='golf-shot-gps-active-round-v1';
 const WELCOME_STORAGE='golf-shot-gps-help-seen-v1';
 const UNIT_STORAGE='golf-shot-gps-distance-unit-v1';
 const MAP_STORAGE='golf-shot-gps-map-provider-v1';
-const APP_RELEASE={major:1,subversion:2,date:'16 Aug 2026'};
+const APP_RELEASE={major:1,subversion:3,date:'21 Aug 2026'};
 const PUBLIC_SHARE_URL='https://enginity.ch/golf-shot-gps/';
 const PUBLIC_SHARE_TEXT=`Track golf shot positions with Golf Shot GPS: ${PUBLIC_SHARE_URL}`;
 const POOR_ACCURACY_METERS=30;
@@ -118,9 +127,21 @@ let preferredMapProvider=readStorage(MAP_STORAGE,'esri')==='osm'?'osm':'esri';
 let round=null, viewedRound=null, hole=1, layers=[], liveLayers=[], capturePending=false;
 let currentPosition=null, currentMarker=null, accuracyCircle=null;
 let trackPositionMode=true;
+let mapOrientationMode='north',currentHeading=null,headingListenersStarted=false,headingPermissionRequested=false,headingPermissionDenied=false;
 let gpsWatchStarted=false;
 let baseLayer=null, activeMapProvider=null;
-const map=L.map('map',{zoomControl:false}).setView([47.37,8.2],16);
+const map=L.map('map',{zoomControl:false,rotate:true,bearing:0,dragRotate:false,touchRotate:false,shiftKeyRotate:false,rotateControl:false}).setView([47.37,8.2],16);
+map.attributionControl.setPrefix(false);
+
+function requestPortraitOrientation(){
+ if(screen.orientation&&typeof screen.orientation.lock==='function')screen.orientation.lock('portrait').catch(()=>{});
+}
+
+requestPortraitOrientation();
+window.addEventListener('orientationchange',()=>{
+ requestPortraitOrientation();
+ setTimeout(()=>map.invalidateSize(),150);
+});
 
 function createBaseLayer(provider){
  if(provider==='esri'){
@@ -359,6 +380,7 @@ function displayCurrentPosition(position){
 }
 
 function updateCurrentPosition(pos){
+ if(Number.isFinite(pos.coords.heading))setCurrentHeading(pos.coords.heading);
  displayCurrentPosition({lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy,time:Date.now()});
 }
 
@@ -387,12 +409,92 @@ function setTrackPositionMode(active){
  button.title=active?'Tracking current position':'Resume position tracking';
 }
 
-function marker(p,label){
- const svg='<div class="tee-marker"><svg width="24" height="30" viewBox="0 0 24 30" aria-hidden="true"><circle cx="12" cy="8" r="7" fill="#fff" stroke="#171717" stroke-width="1.4"/><circle cx="9" cy="6" r=".8" fill="#bbb"/><circle cx="13" cy="4.5" r=".7" fill="#bbb"/><circle cx="15.5" cy="8" r=".8" fill="#bbb"/><circle cx="11" cy="10" r=".65" fill="#bbb"/><path d="M6 15h12l-4.5 3.5L12 29l-1.5-10.5z" fill="#fff" stroke="#171717" stroke-width="1.4" stroke-linejoin="round"/></svg></div>';
- const icon=L.divIcon({className:'',html:svg,iconSize:[24,30],iconAnchor:[12,30],tooltipAnchor:[0,-27]});
+function updateOrientationControl(){
+ const button=document.getElementById('orientationBtn');
+ const headingUp=mapOrientationMode==='heading';
+ const waiting=headingUp&&!Number.isFinite(currentHeading);
+ button.classList.toggle('waiting',waiting);
+ button.setAttribute('aria-pressed',String(headingUp));
+ button.setAttribute('aria-label',headingUp?'Heading Up: map follows your direction':'North Up: map oriented north');
+ button.title=headingUp?(waiting?'Heading Up – waiting for direction':'Heading Up – map follows your direction'):'North Up – orient map to north';
+ button.innerHTML=headingUp?'<svg class="orientation-icon heading" viewBox="0 0 27 31" aria-hidden="true"><path d="M13.5 2 25 29l-11.5-6L2 29z" fill="currentColor"/></svg>':'<svg class="orientation-icon north" viewBox="0 0 32 36" aria-hidden="true"><path d="M16 2v16M9 9l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><text x="16" y="34" text-anchor="middle" fill="currentColor" font-size="17" font-weight="800">N</text></svg>';
+}
+
+function applyMapOrientation(){
+ if(typeof map.setBearing!=='function')return;
+ if(mapOrientationMode==='heading'&&Number.isFinite(currentHeading)){
+  if(typeof map.setHeading==='function')map.setHeading(currentHeading,{ease:.25,deadzone:1});
+  else map.setBearing(-currentHeading);
+  return;
+ }
+ if(typeof map.stopHeadingUp==='function')map.stopHeadingUp();
+ map.setBearing(0);
+}
+
+function setCurrentHeading(value){
+ if(!Number.isFinite(value))return;
+ currentHeading=(value%360+360)%360;
+ updateOrientationControl();
+ applyMapOrientation();
+}
+
+function onDeviceOrientation(event){
+ if(Number.isFinite(event.webkitCompassHeading)){
+  setCurrentHeading(event.webkitCompassHeading);
+  return;
+ }
+ if(Number.isFinite(event.alpha)&&(event.absolute||event.type==='deviceorientationabsolute'))setCurrentHeading(360-event.alpha);
+}
+
+function startHeadingListeners(){
+ if(headingListenersStarted)return;
+ headingListenersStarted=true;
+ window.addEventListener('deviceorientationabsolute',onDeviceOrientation,true);
+ window.addEventListener('deviceorientation',onDeviceOrientation,true);
+}
+
+async function enableHeadingUp(){
+ if(headingPermissionDenied)return false;
+ if(!headingPermissionRequested&&typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+  headingPermissionRequested=true;
+  try{
+   if(await DeviceOrientationEvent.requestPermission()!=='granted'){
+    headingPermissionDenied=true;
+    return false;
+   }
+  }catch(_){
+   headingPermissionDenied=true;
+   return false;
+  }
+ }
+ startHeadingListeners();
+ return true;
+}
+
+document.getElementById('orientationBtn').onclick=async()=>{
+ if(mapOrientationMode==='heading'){
+  mapOrientationMode='north';
+  updateOrientationControl();
+  applyMapOrientation();
+  return;
+ }
+ mapOrientationMode='heading';
+ updateOrientationControl();
+ if(!await enableHeadingUp()){
+  mapOrientationMode='north';
+  info.textContent='Heading permission unavailable';
+ }
+ updateOrientationControl();
+ applyMapOrientation();
+};
+
+function marker(p,label,isTee=false){
+ const safeLabel=String(label||'').replace(/[^A-Za-z0-9]/g,'');
+ const svg=isTee?`<div class="tee-marker"><svg width="36" height="45" viewBox="0 0 36 45" aria-hidden="true"><circle cx="18" cy="11" r="10.5" fill="#4DA3FF" stroke="#1976D2" stroke-width="1.4"/><text x="18" y="15" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">${safeLabel}</text><circle cx="18" cy="25" r="8" fill="#fff" stroke="#4DA3FF" stroke-width="1.4"/><circle cx="15" cy="22.5" r=".9" fill="#4DA3FF"/><circle cx="20" cy="21.5" r=".8" fill="#4DA3FF"/><circle cx="22" cy="25.5" r=".9" fill="#4DA3FF"/><circle cx="17" cy="27.5" r=".75" fill="#4DA3FF"/><path d="M11 31h14l-5 4-2 9-2-9z" fill="#4DA3FF" stroke="#1976D2" stroke-width="1.2" stroke-linejoin="round"/></svg></div>`:'<div class="shot-marker"><svg width="24" height="30" viewBox="0 0 24 30" aria-hidden="true"><circle cx="12" cy="8" r="7" fill="#fff" stroke="#171717" stroke-width="1.4"/><circle cx="9" cy="6" r=".8" fill="#bbb"/><circle cx="13" cy="4.5" r=".7" fill="#bbb"/><circle cx="15.5" cy="8" r=".8" fill="#bbb"/><circle cx="11" cy="10" r=".65" fill="#bbb"/><path d="M6 15h12l-4.5 3.5L12 29l-1.5-10.5z" fill="#fff" stroke="#171717" stroke-width="1.4" stroke-linejoin="round"/></svg></div>';
+ const icon=L.divIcon({className:'',html:svg,iconSize:isTee?[36,45]:[24,30],iconAnchor:isTee?[18,45]:[12,30],tooltipAnchor:isTee?[0,-42]:[0,-27]});
  const m=L.marker([p.lat,p.lng],{icon,interactive:false}).addTo(map);
  layers.push(m);
- if(label)m.bindTooltip(label,{permanent:true,direction:'top',className:'point-label'});
+ if(label&&!isTee)m.bindTooltip(label,{permanent:true,direction:'top',className:'point-label'});
 }
 
 function clearLiveDistance(){
@@ -418,7 +520,7 @@ function redraw(fit=false){
  if(!displayedRound)return;
  const all=[];
  displayedRound.holes.forEach(h=>{
-  h.points.forEach((p,i)=>{all.push([p.lat,p.lng]);marker(p,i===0?'T'+h.number:'S'+i);});
+  h.points.forEach((p,i)=>{all.push([p.lat,p.lng]);marker(p,i===0?'T'+h.number:'S'+i,i===0);});
   for(let i=1;i<h.points.length;i++){
    const a=h.points[i-1],b=h.points[i],d=formatDistance(dist(a,b));
    const line=L.polyline([[a.lat,a.lng],[b.lat,b.lng]],{weight:4,color:'#007AFF'}).addTo(map);
@@ -682,7 +784,7 @@ document.getElementById('clearView').onclick=clearSavedView;
 map.on('dragstart',()=>setTrackPositionMode(false));
 
 function preventUiDoubleTapZoom(){
- const uiSelector='.top,.bottom,.panel,.modal,#locateBtn';
+ const uiSelector='.top,.bottom,.panel,.modal,#locateBtn,#orientationBtn';
  let lastTapEnd=0;
  let lastTapTarget=null;
  const preventSecondTap=event=>{
@@ -832,6 +934,7 @@ document.getElementById('getStartedBtn').onclick=()=>{
 
 restoreDraft();
 setTrackPositionMode(true);
+updateOrientationControl();
 updateUnitControl();
 updateMapControl();
 updateControls();

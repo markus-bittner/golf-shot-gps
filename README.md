@@ -16,9 +16,11 @@ Golf Shot GPS focuses on the essentials. No overloaded features — just quick a
 - Satellite map with live GPS position
 - Simple TEE / SHOT workflow across multiple holes
 - Track Position Mode and Free Map Mode
+- North Up and Heading Up map orientation
 - Automatic Free Mode when the map is moved, with one-tap return to tracking
 - Saved rounds with read-only historical views
 - Tee, shot, and distance labels
+- Enlarged high-visibility tee markers
 - Undo and active-round recovery after reload or reopening
 - Local backup export and import
 - Native app sharing where supported
