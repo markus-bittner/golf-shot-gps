@@ -104,7 +104,10 @@ const DRAFT_STORAGE='golf-shot-gps-active-round-v1';
 const WELCOME_STORAGE='golf-shot-gps-help-seen-v1';
 const UNIT_STORAGE='golf-shot-gps-distance-unit-v1';
 const MAP_STORAGE='golf-shot-gps-map-provider-v1';
+const UPDATE_CHECK_STORAGE='golf-shot-gps-last-update-check-v1';
 const APP_RELEASE={major:1,subversion:3,date:'21 Aug 2026'};
+const APP_BUILD='20260821.1';
+const UPDATE_CHECK_INTERVAL_MS=6*60*60*1000;
 const PUBLIC_SHARE_URL='https://enginity.ch/golf-shot-gps/';
 const PUBLIC_SHARE_TEXT=`Track golf shot positions with Golf Shot GPS: ${PUBLIC_SHARE_URL}`;
 const POOR_ACCURACY_METERS=30;
@@ -128,6 +131,7 @@ let trackPositionMode=true;
 let mapOrientationMode='north',currentHeading=null,headingListenersStarted=false,headingPermissionRequested=false,headingPermissionDenied=false;
 let gpsWatchStarted=false;
 let baseLayer=null, activeMapProvider=null;
+let pendingAppBuild=null;
 function syncViewportHeight(){
  const visualHeight=window.visualViewport?window.visualViewport.height:0;
  const heights=[window.innerHeight,visualHeight].filter(height=>height>0);
@@ -158,9 +162,46 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',refresh
 window.addEventListener('pageshow',settleViewportSize);
 window.addEventListener('load',settleViewportSize);
 document.addEventListener('visibilitychange',()=>{
- if(!document.hidden)settleViewportSize();
+ if(!document.hidden){
+  settleViewportSize();
+  checkForAppUpdate();
+ }
 });
 window.addEventListener('orientationchange',settleViewportSize);
+
+function reloadAppBuild(build){
+ const url=new URL(window.location.href);
+ url.searchParams.set('app-build',build);
+ window.location.replace(url.href);
+}
+
+function applyPendingAppUpdate(delay=0){
+ if(!pendingAppBuild)return;
+ const build=pendingAppBuild;
+ pendingAppBuild=null;
+ setTimeout(()=>reloadAppBuild(build),delay);
+}
+
+async function checkForAppUpdate(){
+ const now=Date.now();
+ const lastCheck=readStorage(UPDATE_CHECK_STORAGE,0);
+ if(Number.isFinite(lastCheck)&&now-lastCheck<UPDATE_CHECK_INTERVAL_MS)return;
+ try{
+  const response=await fetch(`build.json?check=${now}`,{cache:'no-store',credentials:'same-origin'});
+  if(!response.ok)return;
+  const latest=await response.json();
+  if(!latest||typeof latest.build!=='string'||!/^[A-Za-z0-9._-]{1,64}$/.test(latest.build))return;
+  try{localStorage.setItem(UPDATE_CHECK_STORAGE,JSON.stringify(now))}catch(_){}
+  if(latest.build===APP_BUILD)return;
+  if(round&&!round.finished){
+   pendingAppBuild=latest.build;
+   return;
+  }
+  reloadAppBuild(latest.build);
+ }catch(_){
+  // Stay on the current build when offline or when the update check is unavailable.
+ }
+}
 
 function createBaseLayer(provider){
  if(provider==='esri'){
@@ -697,11 +738,13 @@ function finishRound(){
  }
  clearActiveRound();
  showToast('Round saved');
+ applyPendingAppUpdate(3200);
 }
 
 function withdrawRound(){
  if(capturePending||viewedRound||!round)return;
  clearActiveRound();
+ applyPendingAppUpdate();
 }
 
 document.getElementById('finish').onclick=()=>{
@@ -967,6 +1010,8 @@ updateUnitControl();
 updateMapControl();
 updateControls();
 setTimeout(initializeWelcome,0);
+setTimeout(checkForAppUpdate,0);
+setInterval(checkForAppUpdate,60*60*1000);
 </script>
 </body>
 </html>
