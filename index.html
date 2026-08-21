@@ -89,7 +89,7 @@ button:disabled{opacity:.45}
   </div>
 </div>
 <div id="exportDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><div class="modal-card"><h2 id="exportTitle">Export / Import Rounds</h2><p>Saved rounds are stored locally on this device. Export a backup before changing devices or clearing browser data. Imported rounds are added without replacing existing rounds; duplicates are skipped.</p><div class="modal-actions"><button id="exportBtn" class="primary">EXPORT BACKUP</button><button id="importBtn">IMPORT BACKUP</button><button class="cancel" data-close-dialog>CANCEL</button></div><input id="importFile" type="file" accept=".json,.txt,application/json,text/plain" hidden></div></div>
-<div id="exportNameDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="exportNameTitle"><div class="modal-card"><h2 id="exportNameTitle">Export Backup</h2><label class="export-filename" for="exportFileName">Backup file name<input id="exportFileName" value="golf-shot-gps-backup" autocomplete="off" spellcheck="false"></label><div class="modal-actions"><button id="confirmExportBtn" class="primary">SAVE TO DEVICE</button><button id="backToExportBtn" class="cancel">BACK</button></div></div></div>
+<div id="exportNameDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="exportNameTitle"><div class="modal-card"><h2 id="exportNameTitle">Export Backup</h2><label class="export-filename" for="exportFileName">Backup file name<input id="exportFileName" value="" placeholder="golf-shot-gps-backup" autocomplete="off" spellcheck="false"></label><div class="modal-actions"><button id="confirmExportBtn" class="primary">SAVE TO DEVICE</button><button id="backToExportBtn" class="cancel">BACK</button></div></div></div>
 <div id="shareDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle"><div class="modal-card"><h2 id="shareTitle">Share App</h2><p>Share Golf Shot GPS with another golfer.</p><p id="shareUrl" class="modal-note"></p><p id="shareFeedback" class="modal-note" aria-live="polite"></p><div class="modal-actions"><button id="shareBtn" class="primary">SHARE</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
 <div id="coffeeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="coffeeTitle"><div class="modal-card"><h2 id="coffeeTitle">Support Golf Shot GPS</h2><p>Golf Shot GPS is free to use and has no ads or subscriptions.</p><p>If you find it useful, please consider making a donation. Your support helps cover map and service costs and supports further development of the app.</p><div class="modal-actions"><a id="donateLink" class="modal-action primary" href="https://buymeacoffee.com/golf.shot.gps" target="_blank" rel="noopener noreferrer">DONATE VIA BUY ME A COFFEE</a><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
 <div id="finishDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="finishTitle"><div class="modal-card"><h2 id="finishTitle">Finish round?</h2><div class="modal-actions"><button data-close-dialog>NO</button><button id="confirmFinishBtn" class="primary">YES</button><button id="withdrawRoundBtn" class="danger">WITHDRAW ROUND</button></div></div></div>
@@ -106,8 +106,8 @@ const WELCOME_STORAGE='golf-shot-gps-help-seen-v1';
 const UNIT_STORAGE='golf-shot-gps-distance-unit-v1';
 const MAP_STORAGE='golf-shot-gps-map-provider-v1';
 const UPDATE_CHECK_STORAGE='golf-shot-gps-last-update-check-v1';
-const APP_RELEASE={major:1,subversion:3,patch:4,date:'21 Aug 2026'};
-const APP_BUILD='20260821.5';
+const APP_RELEASE={major:1,subversion:3,patch:5,date:'21 Aug 2026'};
+const APP_BUILD='20260821.6';
 const UPDATE_CHECK_INTERVAL_MS=6*60*60*1000;
 const PUBLIC_SHARE_URL='https://enginity.ch/golf-shot-gps/';
 const PUBLIC_SHARE_TEXT=`Track golf shot positions with Golf Shot GPS: ${PUBLIC_SHARE_URL}`;
@@ -940,8 +940,8 @@ document.getElementById('exportBtn').onclick=()=>{
  closeDialog(document.getElementById('exportDialog'));
  openDialog('exportNameDialog');
  const input=document.getElementById('exportFileName');
+ input.value='';
  input.focus();
- input.select();
 };
 
 document.getElementById('backToExportBtn').onclick=()=>{
