@@ -132,6 +132,11 @@ function syncViewportHeight(){
  const visualHeight=window.visualViewport?window.visualViewport.height:0;
  const heights=[window.innerHeight,visualHeight].filter(height=>height>0);
  const portrait=window.matchMedia('(orientation:portrait)').matches;
+ const standalone=navigator.standalone===true||window.matchMedia('(display-mode:standalone)').matches;
+ if(standalone){
+  const screenHeight=portrait?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);
+  if(screenHeight>0)heights.push(screenHeight);
+ }
  const height=portrait?Math.max(...heights):Math.min(...heights);
  if(height)document.documentElement.style.setProperty('--app-height',`${Math.ceil(height)}px`);
 }
