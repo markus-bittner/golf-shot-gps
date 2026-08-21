@@ -81,14 +81,14 @@ button:disabled{opacity:.45}
     <div class="menu-preference"><span>Map type</span><div id="mapSwitch" class="segmented" role="group" aria-label="Map type"><button data-map-provider="esri">SAT</button><button data-map-provider="osm">MAP</button></div></div>
   </div>
   <div class="panel-actions">
-    <button data-dialog="exportDialog">EXPORT ROUNDS</button>
+    <button data-dialog="exportDialog">EXPORT / IMPORT</button>
     <button class="share-action" data-dialog="shareDialog">SHARE APP</button>
     <button class="coffee-action" data-dialog="coffeeDialog">DONATE</button>
     <button data-dialog="helpDialog">HELP / ABOUT / FEEDBACK</button>
     <div class="menu-version" data-app-version></div>
   </div>
 </div>
-<div id="exportDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><div class="modal-card"><h2 id="exportTitle">Export Rounds</h2><p>Saved rounds are stored locally on this device. Export a backup before changing devices or clearing browser data.</p><div class="modal-actions"><button id="exportBtn" class="primary">EXPORT BACKUP</button><button id="importBtn">IMPORT BACKUP</button><button class="cancel" data-close-dialog>CANCEL</button></div><input id="importFile" type="file" accept="application/json" hidden></div></div>
+<div id="exportDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><div class="modal-card"><h2 id="exportTitle">Export / Import Rounds</h2><p>Saved rounds are stored locally on this device. Export a backup before changing devices or clearing browser data. Imported rounds are added without replacing existing rounds; duplicates are skipped.</p><div class="modal-actions"><button id="exportBtn" class="primary">EXPORT BACKUP</button><button id="importBtn">IMPORT BACKUP</button><button class="cancel" data-close-dialog>CANCEL</button></div><input id="importFile" type="file" accept="application/json" hidden></div></div>
 <div id="shareDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="shareTitle"><div class="modal-card"><h2 id="shareTitle">Share App</h2><p>Share Golf Shot GPS with another golfer.</p><p id="shareUrl" class="modal-note"></p><p id="shareFeedback" class="modal-note" aria-live="polite"></p><div class="modal-actions"><button id="shareBtn" class="primary">SHARE</button><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
 <div id="coffeeDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="coffeeTitle"><div class="modal-card"><h2 id="coffeeTitle">Support Golf Shot GPS</h2><p>Golf Shot GPS is free to use and has no ads or subscriptions.</p><p>If you find it useful, please consider making a donation. Your support helps cover map and service costs and supports further development of the app.</p><div class="modal-actions"><a id="donateLink" class="modal-action primary" href="https://buymeacoffee.com/golf.shot.gps" target="_blank" rel="noopener noreferrer">DONATE VIA BUY ME A COFFEE</a><button class="cancel" data-close-dialog>CANCEL</button></div></div></div>
 <div id="finishDialog" class="modal" role="dialog" aria-modal="true" aria-labelledby="finishTitle"><div class="modal-card"><h2 id="finishTitle">Finish round?</h2><div class="modal-actions"><button data-close-dialog>NO</button><button id="confirmFinishBtn" class="primary">YES</button><button id="withdrawRoundBtn" class="danger">WITHDRAW ROUND</button></div></div></div>
@@ -105,8 +105,8 @@ const WELCOME_STORAGE='golf-shot-gps-help-seen-v1';
 const UNIT_STORAGE='golf-shot-gps-distance-unit-v1';
 const MAP_STORAGE='golf-shot-gps-map-provider-v1';
 const UPDATE_CHECK_STORAGE='golf-shot-gps-last-update-check-v1';
-const APP_RELEASE={major:1,subversion:3,date:'21 Aug 2026'};
-const APP_BUILD='20260821.1';
+const APP_RELEASE={major:1,subversion:3,patch:1,date:'21 Aug 2026'};
+const APP_BUILD='20260821.2';
 const UPDATE_CHECK_INTERVAL_MS=6*60*60*1000;
 const PUBLIC_SHARE_URL='https://enginity.ch/golf-shot-gps/';
 const PUBLIC_SHARE_TEXT=`Track golf shot positions with Golf Shot GPS: ${PUBLIC_SHARE_URL}`;
@@ -119,7 +119,7 @@ const MAPBOX_CONFIG={
  styleId:'satellite-v9'
 };
 let rounds=readStorage(STORAGE,[]);
-const appReleaseLabel=`V ${APP_RELEASE.major}.${APP_RELEASE.subversion} · ${APP_RELEASE.date}`;
+const appReleaseLabel=`V ${APP_RELEASE.major}.${APP_RELEASE.subversion}.${APP_RELEASE.patch} · ${APP_RELEASE.date}`;
 document.querySelectorAll('[data-app-version]').forEach(element=>element.textContent=appReleaseLabel);
 document.getElementById('shareUrl').textContent=PUBLIC_SHARE_URL;
 rounds=Array.isArray(rounds)?rounds.filter(validRound):[];
@@ -400,6 +400,19 @@ function validPoint(p){
 function validRound(r){
  return !!r&&Array.isArray(r.holes)&&r.holes.every(h=>
   !!h&&Number.isFinite(Number(h.number))&&Array.isArray(h.points)&&h.points.every(validPoint));
+}
+
+function stableValue(value){
+ if(Array.isArray(value))return value.map(stableValue);
+ if(value&&typeof value==='object')return Object.keys(value).sort().reduce((result,key)=>{
+  result[key]=stableValue(value[key]);
+  return result;
+ },{});
+ return value;
+}
+
+function roundSignature(savedRound){
+ return JSON.stringify(stableValue(savedRound));
 }
 
 function dist(a,b){
@@ -936,14 +949,35 @@ document.getElementById('importBtn').onclick=()=>document.getElementById('import
 
 document.getElementById('importFile').onchange=async e=>{
  try{
-  const imported=JSON.parse(await e.target.files[0].text());
+  const file=e.target.files[0];
+  if(!file)return;
+  const imported=JSON.parse(await file.text());
   if(!Array.isArray(imported)||!imported.every(validRound))throw new Error('invalid backup');
-  if(!writeStorage(STORAGE,imported))return;
-  rounds=imported;
+  const knownIds=new Set(rounds.map(savedRound=>savedRound.id).filter(id=>id!==undefined&&id!==null));
+  const knownSignatures=new Set(rounds.map(roundSignature));
+  const additions=[];
+  let duplicateCount=0;
+  imported.forEach(savedRound=>{
+   const hasKnownId=savedRound.id!==undefined&&savedRound.id!==null&&knownIds.has(savedRound.id);
+   const signature=roundSignature(savedRound);
+   if(hasKnownId||knownSignatures.has(signature)){
+    duplicateCount++;
+    return;
+   }
+   additions.push(savedRound);
+   if(savedRound.id!==undefined&&savedRound.id!==null)knownIds.add(savedRound.id);
+   knownSignatures.add(signature);
+  });
+  const merged=[...additions,...rounds];
+  if(additions.length&&!writeStorage(STORAGE,merged))return;
+  rounds=merged;
   closeDialog(document.getElementById('exportDialog'));
   showRounds();
+  showToast(`${additions.length} ${additions.length===1?'round':'rounds'} imported${duplicateCount?` · ${duplicateCount} ${duplicateCount===1?'duplicate':'duplicates'} skipped`:''}`);
  }catch(_){
   alert('Invalid backup file');
+ }finally{
+  e.target.value='';
  }
 };
 

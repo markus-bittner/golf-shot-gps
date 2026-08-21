@@ -22,7 +22,7 @@ Golf Shot GPS focuses on the essentials. No overloaded features — just quick a
 - Tee, shot, and distance labels
 - Enlarged high-visibility tee markers
 - Undo and active-round recovery after reload or reopening
-- Local backup export and import
+- Local backup export and merge import with duplicate protection
 - Native app sharing where supported
 - iPhone, iPad, Android, and Samsung support
 - Add to Home Screen support
